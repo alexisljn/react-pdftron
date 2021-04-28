@@ -24,6 +24,7 @@
   "scripts": {
     "dev": "webpack --mode development",
     "start": "webpack serve --open --host 0.0.0.0",
+    "watch": "webpack --mode development --watch --progress",
     "build": "webpack --mode production"
   },
   "author": "",

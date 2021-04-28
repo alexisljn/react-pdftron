@@ -23,4 +23,4 @@ services:
       - 3000:3000
       #  environment:
       #   - NODE_ENV=development
-    command:  node index.js #sh -c "npm install webpack"
+    command:  sh -c "npm install && npm run watch"
