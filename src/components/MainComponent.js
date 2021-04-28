@@ -11,7 +11,7 @@ const MainComponent = () => {
         WebViewer(
             {
                 path: '/pdftron/lib',
-                initialDoc: '/fixtures/sample.pdf',
+                initialDoc: '/fixture/sample.pdf',
             },
             viewer.current,
         ).then((instance) => {
