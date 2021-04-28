@@ -10,6 +10,7 @@ const MainComponent = () => {
     useEffect(() => {
         WebViewer(
             {
+                licenseKey: 'toto',
                 path: '/pdftron/lib',
                 initialDoc: '/fixture/sample.pdf',
             },
