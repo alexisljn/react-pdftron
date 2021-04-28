@@ -1,0 +1,26 @@
+version: "3.5"
+
+services:
+  web:
+    restart: always
+    image: webdevops/php-nginx:8.0
+    ports:
+      - 8000:80
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - WEB_DOCUMENT_ROOT=/app/web
+
+  webpack:
+    #    restart: always
+    container_name: webpack
+    image: node:14
+    volumes:
+      - .:/home/node/app
+    working_dir: /home/node/app
+    ports:
+      - 3000:3000
+      #  environment:
+      #   - NODE_ENV=development
+    command:  node index.js #sh -c "npm install webpack"
