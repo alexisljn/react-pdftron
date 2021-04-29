@@ -41,16 +41,12 @@ const PdfTron = () => {
     }, [])
 
     return (
-        <div className="MyComponent">
-            <button onClick={() => console.log(webViewer)}>X</button>
-            <div className="header">React sample</div>
+        <div className="MyComponent" style={{width: '75%'}}>
+            {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
+            {/*<div className="header">React sample</div>*/}
             <div className="webviewer" ref={viewer} style={{height: "100vh"}}></div>
         </div>
     );
-
-    return (
-        <h1>From React</h1>
-    )
 }
 
 export default PdfTron;

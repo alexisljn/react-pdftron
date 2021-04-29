@@ -1,30 +1,16 @@
-// const http = require('http');
-//
-// const port = 3000;
-//
-// const server = http.createServer((req, res) => {
-//     res.statusCode = 200;
-//     res.setHeader('Content-Type', 'text/plain');
-//     res.end('Hello World');
-// });
-//
-// server.listen(port, () => {
-//     console.log(`Server running/`);
-// });
-
-
-// import "./style.scss"
 import "core-js";
 // import 'whatwg-fetch';
 
 import React from "react";
 import { render } from "react-dom";
 import PdfTron from "./components/PdfTron";
+import Sidebar from "./components/Sidebar";
 
 function App() {
     return (
-        <div id="global">
-        <PdfTron/>
+        <div id="global" style={{display: 'flex'}}>
+            <Sidebar/>
+            <PdfTron/>
         </div>
     )
 }
