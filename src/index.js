@@ -16,13 +16,16 @@
 // import "./style.scss"
 import "core-js";
 // import 'whatwg-fetch';
-import MainComponent from "./components/MainComponent";
+
 import React from "react";
 import { render } from "react-dom";
+import PdfTron from "./components/PdfTron";
 
 function App() {
     return (
-        <MainComponent/>
+        <div id="global">
+        <PdfTron/>
+        </div>
     )
 }
 
