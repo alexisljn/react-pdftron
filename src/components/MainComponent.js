@@ -7,6 +7,8 @@ import Moveable from "react-moveable";
 const MainComponent = () => {
 
     const [webViewer, setWebViewer] = useState(null);
+    const [webViewerIframe, setWebViewerIframe] = useState(null);
+    const [pageContainers, setPageContainers] = useState([]);
     const viewer = useRef(null);
 
     const [target, setTarget] = React.useState();
@@ -26,12 +28,10 @@ const MainComponent = () => {
                 viewer.current,
             )
             setWebViewer(instance)
-            handleClick(instance)
+            registerEvents(instance)
         }
         (async () => {
-           await loadWebViewer()
-
-            handleClick()
+            await loadWebViewer()
         })()
         // loadWebViewer();
 
@@ -49,13 +49,48 @@ const MainComponent = () => {
         // });
     }, [])
 
-    const handleClick = (instance) => {
+    const registerPageContainers = (iframe) => {
+
+        const iframeWindow = iframe.contentWindow;
+        const iframeDocument = iframeWindow.document;
+        const pageContainers = iframeDocument.querySelectorAll('.pageContainer');
+
+        console.log(pageContainers);
+
+        setPageContainers(Array.from(pageContainers));
+    }
+
+    const registerEvents = (instance) => {
         const { docViewer } = instance;
         console.log('docViewer', docViewer);
+
         // e est un objet event avec des propriétés supp par pdfTron
         docViewer.on('click', (e) => {
             console.log('CLICK', e);
+            console.log('COORDONNEES VIEWPORT', e.target.getBoundingClientRect());
+        })
 
+        docViewer.on('pageComplete', (e) => {
+            console.log('PAGE COMPLETE', e);
+        })
+
+        docViewer.on('documentLoaded', (e) => {
+            console.log('DOCUMENT LOADED', e);
+
+            const iframe = document.querySelector('#webviewer-1');
+            console.log("L'IFRAME A ENREGISTRER", iframe)
+            setWebViewerIframe(iframe);
+            console.log("L'IFRAME QUI A ETE ENREGISTREE", webViewerIframe);
+
+            registerPageContainers(iframe);
+        })
+
+        docViewer.on('displayModeUpdated', (e) => {
+            console.log('DISPLAY MODE UPDATED', e);
+
+            const iframe = document.querySelector('#webviewer-1');
+
+            registerPageContainers(iframe);
         })
     }
 
@@ -69,153 +104,100 @@ const MainComponent = () => {
         console.log("docViewerr", docViewer);
     }
 
+    const getMoveable = (target) => {
+        return (
+            <Moveable
+                target={target}
+                container={null}
+                origin={false}
+
+                /* Resize event edges */
+                edge={false}
+
+                /* draggable */
+                draggable={true}
+                throttleDrag={0}
+                onDragStart={({ target, clientX, clientY }) => {
+                    // console.clear(); // Avoid console.log lag
+                    console.log("onDragStart", target);
+                }}
+                onDrag={({
+                             target,
+                             beforeDelta, beforeDist,
+                             left, top, // COORDONNEES ABSOLUES RELATIVES AU DOCUMENT
+                             right, bottom,
+                             delta, dist,
+                             transform,
+                             clientX, clientY,
+                         }) => {
+                    // console.log("onDrag left, top", left, top);
+                    target.style.left = `${left}px`;
+                    target.style.top = `${top}px`;
+                    // console.log("onDrag translate", dist);
+                    // target.style.transform = transform;
+                }}
+                onDragEnd={({ target, isDrag, clientX, clientY }) => {
+                    const targetViewportPosition = target.getBoundingClientRect();
+                    const targetViewportX = targetViewportPosition.x;
+                    const targetViewPortY = targetViewportPosition.y;
+
+                    console.log("onDragEnd", target.id, target.getBoundingClientRect());
+                    pageContainers.forEach(pageContainer => {
+                        const webViewerIframeViewportPosition = webViewerIframe.getBoundingClientRect();
+                        const webViewerIframeViewportX = webViewerIframeViewportPosition.x;
+                        const webViewerIframeViewportY = webViewerIframeViewportPosition.y;
+
+                        const pageContainerIframeViewportPosition = pageContainer.getBoundingClientRect();
+                        const pageContainerIframeViewportX = pageContainerIframeViewportPosition.x;
+                        const pageContainerIframeViewportY = pageContainerIframeViewportPosition.y;
+
+                        const pageContainerViewportX1 = pageContainerIframeViewportX + webViewerIframeViewportX;
+                        const pageContainerViewportY1 = pageContainerIframeViewportY + webViewerIframeViewportY;
+                        const pageContainerViewportX2 = pageContainerViewportX1 + pageContainerIframeViewportPosition.width;
+                        const pageContainerViewportY2 = pageContainerViewportY1 + pageContainerIframeViewportPosition.height;
+
+                        const isTargetDraggedInPageContainer = () => {
+                            if (targetViewportX < pageContainerViewportX1) {
+                                return false;
+                            }
+
+                            if (targetViewPortY < pageContainerViewportY1) {
+                                return false;
+                            }
+
+                            if (targetViewportX > pageContainerViewportX2) {
+                                return false;
+                            }
+
+                            if (targetViewPortY > pageContainerViewportY2) {
+                                return false;
+                            }
+
+                            return true;
+                        }
+
+                        let draggedInThisPageContainer = isTargetDraggedInPageContainer();
+
+                        console.log(pageContainer, draggedInThisPageContainer, pageContainerViewportX1, pageContainerViewportY1, pageContainerViewportX2, pageContainerViewportY2);
+                    });
+                }}
+
+                /* When resize or scale, keeps a ratio of the width, height. */
+                keepRatio={true}
+            />
+        );
+    }
+
     return (
         <>
             <button onClick={() => {test()}}>ZZ</button>
             <div style={{height: "100vh", backgroundColor: "#E8E8E8", width: "25%"}}>
                 SIDEBAR
-                <div className="target" style={{width: 150, height: 50, backgroundColor: 'blue', position: 'absolute'}}>DRAGGABLE</div>
-                <Moveable
-                    target={document.querySelector(".target")}
-                    container={null}
-                    origin={true}
-
-                    /* Resize event edges */
-                    edge={false}
-
-                    /* draggable */
-                    draggable={true}
-                    throttleDrag={0}
-                    onDragStart={({ target, clientX, clientY }) => {
-                        console.log("onDragStart", target);
-                    }}
-                    onDrag={({
-                                 target,
-                                 beforeDelta, beforeDist,
-                                 left, top,
-                                 right, bottom,
-                                 delta, dist,
-                                 transform,
-                                 clientX, clientY,
-                             }) => {
-                        // console.log("onDrag left, top", left, top);
-                        // target!.style.left = `${left}px`;
-                        // target!.style.top = `${top}px`;
-                        // console.log("onDrag translate", dist);
-                        target.style.transform = transform;
-                    }}
-                    onDragEnd={({ target, isDrag, clientX, clientY }) => {
-                        console.log("onDragEnd", target, isDrag);
-                    }}
-
-                    /* When resize or scale, keeps a ratio of the width, height. */
-                    keepRatio={true}
-
-                    /* resizable*/
-                    /* Only one of resizable, scalable, warpable can be used. */
-                    resizable={true}
-                    throttleResize={0}
-                    onResizeStart={({ target , clientX, clientY}) => {
-                        console.log("onResizeStart", target);
-                    }}
-                    onResize={({
-                                   target, width, height,
-                                   dist, delta, direction,
-                                   clientX, clientY,
-                               }) => {
-                        console.log("onResize", target);
-                        delta[0] && (target.style.width = `${width}px`);
-                        delta[1] && (target.style.height = `${height}px`);
-                    }}
-                    onResizeEnd={({ target, isDrag, clientX, clientY }) => {
-                        console.log("onResizeEnd", target, isDrag);
-                    }}
-
-                    /* scalable */
-                    /* Only one of resizable, scalable, warpable can be used. */
-                    scalable={true}
-                    throttleScale={0}
-                    onScaleStart={({ target, clientX, clientY }) => {
-                        console.log("onScaleStart", target);
-                    }}
-                    onScale={({
-                                  target, scale, dist, delta, transform,
-                                  clientX, clientY,
-                              }) => {
-                        console.log("onScale scale", scale);
-                        target.style.transform = transform;
-                    }}
-                    onScaleEnd={({ target, isDrag, clientX, clientY }) => {
-                        console.log("onScaleEnd", target, isDrag);
-                    }}
-
-                    /* rotatable */
-                    rotatable={true}
-                    throttleRotate={0}
-                    onRotateStart={({ target, clientX, clientY }) => {
-                        console.log("onRotateStart", target);
-                    }}
-                    onRotate={({
-                                   target,
-                                   delta, dist,
-                                   transform,
-                                   clientX, clientY,
-                               }) => {
-                        console.log("onRotate", dist);
-                        target.style.transform = transform;
-                    }}
-                    onRotateEnd={({ target, isDrag, clientX, clientY }) => {
-                        console.log("onRotateEnd", target, isDrag);
-                    }}
-
-                    /* warpable */
-                    /* Only one of resizable, scalable, warpable can be used. */
-                    /*
-                    this.matrix = [
-                        1, 0, 0, 0,
-                        0, 1, 0, 0,
-                        0, 0, 1, 0,
-                        0, 0, 0, 1,
-                    ]
-                    */
-                    warpable={true}
-                    onWarpStart={({ target, clientX, clientY }) => {
-                        console.log("onWarpStart", target);
-                    }}
-                    onWarp={({
-                                 target,
-                                 clientX,
-                                 clientY,
-                                 delta,
-                                 dist,
-                                 multiply,
-                                 transform,
-                             }) => {
-                        console.log("onWarp", target);
-                        // target.style.transform = transform;
-                        this.matrix = multiply(this.matrix, delta);
-                        target.style.transform = `matrix3d(${this.matrix.join(",")})`;
-                    }}
-                    onWarpEnd={({ target, isDrag, clientX, clientY }) => {
-                        console.log("onWarpEnd", target, isDrag);
-                    }}
-
-                    // Enabling pinchable lets you use events that
-                    // can be used in draggable, resizable, scalable, and rotateable.
-                    pinchable={true}
-                    onPinchStart={({ target, clientX, clientY, datas }) => {
-                        // pinchStart event occur before dragStart, rotateStart, scaleStart, resizeStart
-                        console.log("onPinchStart");
-                    }}
-                    onPinch={({ target, clientX, clientY, datas }) => {
-                        // pinch event occur before drag, rotate, scale, resize
-                        console.log("onPinch");
-                    }}
-                    onPinchEnd={({ isDrag, target, clientX, clientY, datas }) => {
-                        // pinchEnd event occur before dragEnd, rotateEnd, scaleEnd, resizeEnd
-                        console.log("onPinchEnd");
-                    }}
-                />
+                <div id="bleu" className="target" style={{width: 150, height: 50, backgroundColor: 'blue', position: 'absolute'}}>DRAGGABLE</div>
+                <div id="rouge" className="target" style={{width: 170, height: 40, backgroundColor: 'red', position: 'absolute'}}>DRAGGABLE</div>
+                {Array.from(document.querySelectorAll('.target')).map(target => {
+                    return getMoveable(target);
+                })}
             </div>
         <div className="MyComponent" style={{width: '75%'}}>
             {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
