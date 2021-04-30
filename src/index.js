@@ -3,14 +3,16 @@ import "core-js";
 
 import React from "react";
 import { render } from "react-dom";
-import PdfTron from "./components/PdfTron";
+import MainComponent from "./components/MainComponent";
 import Sidebar from "./components/Sidebar";
 
 function App() {
+
+    // Listing des champs placés :
+
     return (
         <div id="global" style={{display: 'flex'}}>
-            <Sidebar/>
-            <PdfTron/>
+            <MainComponent/>
         </div>
     )
 }
