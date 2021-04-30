@@ -4,7 +4,6 @@ import "core-js";
 import React from "react";
 import { render } from "react-dom";
 import MainComponent from "./components/MainComponent";
-import Sidebar from "./components/Sidebar";
 
 function App() {
 
