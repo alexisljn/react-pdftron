@@ -63,6 +63,26 @@ const MainComponent = () => {
 
     }
 
+    const getStyle = (inputName) => {
+        const colorMapping =  {
+            signature: 'blue',
+            name: 'red',
+            email: 'green'
+        }
+
+        return {
+            width: 150,
+            height: 30,
+            backgroundColor: colorMapping[inputName],
+            color: 'white',
+            cursor: 'pointer'
+        }
+    }
+
+    const createMoveable = (inputName) => {
+        console.log("CREATE MOVEABLE", inputName);
+    }
+
     const test = () => {
         const {docViewer} = webViewer;
 
@@ -74,6 +94,24 @@ const MainComponent = () => {
             <button onClick={() => {test()}}>ZZ</button>
             <div style={{height: "100vh", backgroundColor: "#E8E8E8", width: "25%"}}>
                 SIDEBAR
+                <div style={getStyle('signature')}
+                     onClick={() => createMoveable('signature')}
+                >
+                    SIGNATURE
+                </div>
+                <div style={{marginBottom: 20}}/>
+                <div style={getStyle('name')}
+                     onClick={() => createMoveable('name')}
+                >
+                    NOM
+                </div>
+                <div style={{marginBottom: 20}}/>
+                <div style={getStyle('email')}
+                     onClick={() => createMoveable('email')}
+                >
+                    EMAIL
+                </div>
+                <div style={{marginBottom: 20}}/>
                 <div className="target" style={{width: 150, height: 50, backgroundColor: 'blue', position: 'absolute'}}>DRAGGABLE</div>
                 <Moveable
                     target={document.querySelector(".target")}
