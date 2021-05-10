@@ -3,6 +3,7 @@ import {useRef} from 'react';
 import regeneratorRuntime from "regenerator-runtime";
 import WebViewer from "@pdftron/webviewer";
 import Moveable from "react-moveable";
+import DraggableField from "./DraggableField";
 
 const MainComponent = () => {
 
@@ -12,7 +13,8 @@ const MainComponent = () => {
     const [targets, setTargets] = useState([]);
     const [signatureCounter, setSignatureCounter] = useState(1);
     const [emailCounter, setEmailCounter] = useState(1);
-    const [nameCounter, setNameCounter] = useState(1)
+    const [nameCounter, setNameCounter] = useState(1);
+    const [isLoading, setIsLoading] = useState(true);
 
     // const [target, setTarget] = React.useState();
     const [frame, setFrame] = React.useState({
@@ -51,38 +53,30 @@ const MainComponent = () => {
         setTargets([
             {
                 // domElt: document.querySelector(`.target-signature-${signatureCounter}`),
-                domElt: `target-signature-${signatureCounter}`,
+                domElt: `target-signature-1`,
                 type: 'signature',
                 isActive: false,
                 id:  1,
             },
             {
                 // domElt: document.querySelector(`.target-name-${nameCounter}`),
-                domElt: `target-name-${nameCounter}`,
+                domElt: `target-name-1`,
                 type: 'name',
                 isActive: false,
                 id: 1,
             },
             {
                 // domElt: document.querySelector(`.target-email-${emailCounter}`),
-                domElt: `target-email-${emailCounter}`,
+                domElt: `target-email-1`,
                 type: 'email',
                 isActive: false,
                 id: 1,
             }
         ])
-        // addTargets({
-        //     domElt: document.querySelector(".target-signature-1"),
-        //     type: 'signature'
-        // })
-        // addTargets({
-        //     domElt: document.querySelector(".target-name-1"),
-        //     type: 'name'
-        // })
-        // addTargets({
-        //     domElt: document.querySelector(".target-email-1"),
-        //     type: 'email'
-        // })
+
+        setTimeout(() => setIsLoading(false), 20)
+
+
         // (async () => {
         //    await loadWebViewer()
         //
@@ -101,6 +95,8 @@ const MainComponent = () => {
         //     // you can now call WebViewer APIs here...
         // });
     }, [])
+
+
 
     const handleClick = (instance) => {
         const { docViewer } = instance;
@@ -223,16 +219,13 @@ const MainComponent = () => {
 
         const currentTargetElt = document.querySelector(`.${target.domElt}`);
         currentTargetElt.style.position = 'absolute';
-        // document.querySelector('.sidebar').appendChild(currentTargetElt);
 
-        // Recupérer le compteur après incrémentation
         const newCounterValue = incrementCounter(target.type)
-        console.log("newCounterValue", newCounterValue);
-        console.log("post return", signatureCounter);
-        const newDomTargetName = createDOMTarget(target.type, newCounterValue)
+        // const newDomTargetName = createDOMTarget(target.type, newCounterValue)
 
         const newTarget = {
-            domElt: newDomTargetName,
+            // domElt: newDomTargetName,
+            domElt: `target-${target.type}-${newCounterValue}`,
             type: target.type,
             isActive: false,
             id: newCounterValue
@@ -267,25 +260,25 @@ const MainComponent = () => {
             <div className="sidebar" style={{height: "100vh", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
                 SIDEBAR
                 <button onClick={() => {test()}}>ZZ</button>
-                {/*Soit on récupere la position initial de chaque target */}
-                {/*Soit on créer une div wrapper pour chaque type de target et quand on récréé une target*/}
-                {/*on l'ajoute en enfant de cette div wrapper.*/}
+
                 <div className="sidebar-signature">
-                    <div className={`target-signature-1`} style={getStyle('signature')}>SIGNATURE</div>
+                    {targets.map(targetObj => {
+                        if (targetObj.type === SIGNATURE_TYPE)
+                            return <DraggableField type={targetObj.type} counter={targetObj.id} getStyle={getStyle}/>
+                    })}
                 </div>
                 <div className="sidebar-name">
-                    <div className={`target-name-1`} style={getStyle('name')}>NAME</div>
+                    {targets.map(targetObj => {
+                        if (targetObj.type === NAME_TYPE)
+                            return <DraggableField type={targetObj.type} counter={targetObj.id} getStyle={getStyle}/>
+                    })}
                 </div>
                 <div className="sidebar-email">
-                    <div className={`target-email-1`} style={getStyle('email')}>EMAIL</div>
+                    {targets.map(targetObj => {
+                        if (targetObj.type === EMAIL_TYPE)
+                            return <DraggableField type={targetObj.type} counter={targetObj.id} getStyle={getStyle}/>
+                    })}
                 </div>
-
-                {/*/!*<div style={{marginBottom: 20}} />*!/*/}
-                {/*</div>*/}
-
-                {/*/!*<div style={{marginBottom: 20}}/>*!/*/}
-
-                {/*/!*<div style={{marginBottom: 20}}/>*!/*/}
                 {/*{targets.map(target => (*/}
                 {/*    <div className={`target-${target.type}-${target.id}`}*/}
                 {/*         style={getStyle(target.type)}*/}
@@ -297,51 +290,54 @@ const MainComponent = () => {
 
                 {/*<div className="target" style={{width: 150, height: 50, backgroundColor: 'blue', position: 'absolute'}}>DRAGGABLE</div>*/}
             </div>
-        <div className="input-fields" style={{position: 'absolute'}}></div>
         <div className="MyComponent" style={{width: '75%'}}>
             {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
             {/*<div className="header">React sample</div>*/}
             <div className="webviewer" ref={viewer} style={{height: "100vh"}}></div>
         </div>
             {/* On créer un Moveable par target*/}
-            {targets.map(targetObj => {
+            {!isLoading &&
+                targets.map(targetObj => {
                 // console.log(`DOM.target-${targetObj.type}-${targetObj.id}`, document.querySelector(`.target-${targetObj.type}-${targetObj.id}`))
-                return (
-                    <>
-                        <Moveable
-                            target={document.querySelector(`.target-${targetObj.type}-${targetObj.id}`)}
-                            container={null}
-                            origin={false}
-                            edge={false}
-                            draggable={true}
-                            throttleDrag={0}
-                            onDragStart={({ target, clientX, clientY }) => {
-                                console.log("onDragStart", target);
-                            }}
-                            onDrag={({
-                                         target,
-                                         beforeDelta, beforeDist,
-                                         left, top,
-                                         right, bottom,
-                                         delta, dist,
-                                         transform,
-                                         clientX, clientY,
-                                     }) => {
-                                // console.log("onDrag left, top", left, top);
-                                // target!.style.left = `${left}px`; COM BY TUTO
-                                // target!.style.top = `${top}px`; COM BY TUTO
-                                // console.log("onDrag translate", dist);
-                                target.style.transform = transform;
-                                // console.log("targetOBJ", targetObj)
-                                if (!targetObj.isActive) createMoveable(targetObj)
-                            }}
-                            onDragEnd={({ target, isDrag, clientX, clientY }) => {
-                                // console.log("onDragEnd", target, isDrag);
-                            }}
-                        />
-                    </>
-                )
-            })}
+                    console.log(targetObj.domElt)
+                    console.log("QuerySelectpr",document.querySelector(`.${targetObj.domElt}`));
+                    return (
+                        <>
+                            <Moveable
+                                target={document.querySelector(`.${targetObj.domElt}`)}
+                                container={null}
+                                origin={false}
+                                edge={false}
+                                draggable={true}
+                                throttleDrag={0}
+                                onDragStart={({ target, clientX, clientY }) => {
+                                    console.log("onDragStart", target);
+                                }}
+                                onDrag={({
+                                             target,
+                                             beforeDelta, beforeDist,
+                                             left, top,
+                                             right, bottom,
+                                             delta, dist,
+                                             transform,
+                                             clientX, clientY,
+                                         }) => {
+                                    // console.log("onDrag left, top", left, top);
+                                    // target!.style.left = `${left}px`; COM BY TUTO
+                                    // target!.style.top = `${top}px`; COM BY TUTO
+                                    // console.log("onDrag translate", dist);
+                                    target.style.transform = transform;
+                                    // console.log("targetOBJ", targetObj)
+                                    if (!targetObj.isActive) createMoveable(targetObj)
+                                }}
+                                onDragEnd={({ target, isDrag, clientX, clientY }) => {
+                                    // console.log("onDragEnd", target, isDrag);
+                                }}
+                            />
+                        </>
+                    )
+                }
+            )}
         </>
     );
 }
