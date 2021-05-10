@@ -221,6 +221,10 @@ const MainComponent = () => {
         console.log('targetCopy AVT AJOUT', targetsCopy);
         // setTargets(targetsCopy);
 
+        const currentTargetElt = document.querySelector(`.${target.domElt}`);
+        currentTargetElt.style.position = 'absolute';
+        // document.querySelector('.sidebar').appendChild(currentTargetElt);
+
         // Recupérer le compteur après incrémentation
         const newCounterValue = incrementCounter(target.type)
         console.log("newCounterValue", newCounterValue);
@@ -260,9 +264,9 @@ const MainComponent = () => {
 
     return (
         <>
-            <button onClick={() => {test()}}>ZZ</button>
-            <div className="sidebar" style={{height: "100vh", backgroundColor: "#E8E8E8", width: "25%"}}>
+            <div className="sidebar" style={{height: "100vh", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
                 SIDEBAR
+                <button onClick={() => {test()}}>ZZ</button>
                 {/*Soit on récupere la position initial de chaque target */}
                 {/*Soit on créer une div wrapper pour chaque type de target et quand on récréé une target*/}
                 {/*on l'ajoute en enfant de cette div wrapper.*/}
@@ -293,6 +297,7 @@ const MainComponent = () => {
 
                 {/*<div className="target" style={{width: 150, height: 50, backgroundColor: 'blue', position: 'absolute'}}>DRAGGABLE</div>*/}
             </div>
+        <div className="input-fields" style={{position: 'absolute'}}></div>
         <div className="MyComponent" style={{width: '75%'}}>
             {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
             {/*<div className="header">React sample</div>*/}
