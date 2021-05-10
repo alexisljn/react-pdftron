@@ -84,8 +84,6 @@ const MainComponent = () => {
         //     type: 'email'
         // })
 
-        console.log('TARGETS', targets);
-
         // (async () => {
         //    await loadWebViewer()
         //
@@ -120,11 +118,13 @@ const MainComponent = () => {
     const incrementCounter = (type) => {
         switch (type) {
             case SIGNATURE_TYPE:
-                setSignatureCounter(() => signatureCounter + 1);
+                setSignatureCounter((signatureCounter) => signatureCounter + 1);
                 break;
             case EMAIL_TYPE:
+                setEmailCounter((emailCounter) => emailCounter + 1);
                 break;
             case NAME_TYPE:
+                setNameCounter((nameCounter) => nameCounter + 1);
                 break;
             default:
                 return;
@@ -211,6 +211,9 @@ const MainComponent = () => {
         })
         console.log('targCopy', targetsCopy);
         console.log('targs', targets);
+        setTargets(targetsCopy);
+
+        const newDomTargetName = createDOMTarget(target.type, )
         // setTargets(targets);
 
         // console.log("targets with update", targets)
@@ -236,7 +239,7 @@ const MainComponent = () => {
        //
        // targetsCopy.push(newTarget);
        //  console.log("targets pre set", targets)
-        setTargets(targetsCopy);
+
 
     }
 
