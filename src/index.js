@@ -10,7 +10,7 @@ function App() {
     // Listing des champs placés :
 
     return (
-        <div id="global" style={{display: 'flex'}}>
+        <div id="global" style={{display: 'flex', overflow: "auto"}}>
             <MainComponent/>
         </div>
     )
