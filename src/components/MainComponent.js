@@ -10,11 +10,12 @@ const MainComponent = () => {
     const [webViewer, setWebViewer] = useState(null);
     const viewer = useRef(null);
 
+    const [fields, setFields] = useState([]);
     const [targets, setTargets] = useState([]);
     const [signatureCounter, setSignatureCounter] = useState(1);
     const [emailCounter, setEmailCounter] = useState(1);
     const [nameCounter, setNameCounter] = useState(1);
-    const [isLoading, setIsLoading] = useState(true);
+    // const [isLoading, setIsLoading] = useState(true);
 
     // const [target, setTarget] = React.useState();
     const [frame, setFrame] = React.useState({
@@ -26,8 +27,6 @@ const MainComponent = () => {
     const NAME_TYPE = 'name';
 
     useEffect(() => {
-        // setTarget(document.querySelector(".target"));
-
         const loadWebViewer = async () => {
             const instance = await WebViewer(
                 {
@@ -40,49 +39,28 @@ const MainComponent = () => {
             setWebViewer(instance)
             handleClick(instance)
         }
+        loadWebViewer();
 
+        const defaultFields = getDefaultFields();
 
-        console.log("SIG COUNTER", signatureCounter);
+        setFields(defaultFields);
+        // setTimeout(() => {
+        //     console.log("UPDATE !")
+        // },2000)
+        // setTargets(defaultFields);
+        // setTargets(defaultFields)
 
-       // initiate
-       //  const signatureDOMTarget = createDOMTarget('signature', signatureCounter, '.sidebar');
-       //  const nameDOMTarget = createDOMTarget('name', nameCounter, '.sidebar');
-       //  const emailDOMTarget = createDOMTarget('email', emailCounter, '.sidebar');
-
-        // SetTargets pour pouvoir créer les premiers Moveable dans le DOM.
-        setTargets([
-            {
-                // domElt: document.querySelector(`.target-signature-${signatureCounter}`),
-                domElt: `target-signature-1`,
-                type: 'signature',
-                isActive: false,
-                id:  1,
-            },
-            {
-                // domElt: document.querySelector(`.target-name-${nameCounter}`),
-                domElt: `target-name-1`,
-                type: 'name',
-                isActive: false,
-                id: 1,
-            },
-            {
-                // domElt: document.querySelector(`.target-email-${emailCounter}`),
-                domElt: `target-email-1`,
-                type: 'email',
-                isActive: false,
-                id: 1,
-            }
-        ])
-
-        setTimeout(() => setIsLoading(false), 20)
-
+        waitForFields().then(() => {
+            setTargets(defaultFields);
+            // setIsLoading(false);
+        })
 
         // (async () => {
         //    await loadWebViewer()
         //
         //     handleClick()
         // })()
-        // loadWebViewer();
+
         // WebViewer(
         //     {
         //         licenseKey: 'toto',
@@ -96,6 +74,10 @@ const MainComponent = () => {
         // });
     }, [])
 
+    useEffect(() => {
+        // Splitter la liste en 3
+        console.log('USER EFFECT TARGETS')
+    },[signatureCounter, nameCounter, emailCounter])
 
 
     const handleClick = (instance) => {
@@ -162,27 +144,28 @@ const MainComponent = () => {
 
         return targetClassname;
     }
-    // const getDefaultTargets = () => {
-    //     return [
-    //         {
-    //             domElt: document.querySelector(".target-signature-1"),
-    //             type: 'signature',
-    //             isActive: false,
-    //             id: 1,
-    //         },
-    //         {
-    //             domElt: document.querySelector(".target-name-1"),
-    //             type: 'name',
-    //             isActive: false,
-    //             id: 2,
-    //         },
-    //         {
-    //             domElt: document.querySelector(".target-email-1"),
-    //             type: 'email',
-    //             isActive: false,
-    //             id: 3,
-    //         }]
-    // }
+
+    const getDefaultFields = () => {
+        return [
+            {
+                domElt: 'target-signature-1',
+                type: 'signature',
+                isActive: false,
+                id: 1,
+            },
+            {
+                domElt: 'target-name-1',
+                type: 'name',
+                isActive: false,
+                id: 1,
+            },
+            {
+                domElt: 'target-email-1',
+                type: 'email',
+                isActive: false,
+                id: 1,
+            }]
+    }
 
     // const addTarget = (target) => {
     //     targets.push(target)
@@ -205,17 +188,14 @@ const MainComponent = () => {
         }
     }
 
-    const createMoveable = (target) => {
+    const createMoveable = async (target) => {
 
-        const targetsCopy = JSON.parse(JSON.stringify(targets));
+        const targetsCopy = JSON.parse(JSON.stringify(fields));
 
         targetsCopy.forEach((targetFromState, index) => {
             if (targetFromState.id === target.id && targetFromState.type === target.type)
                 targetFromState['isActive'] = true;
         })
-
-        console.log('targetCopy AVT AJOUT', targetsCopy);
-        // setTargets(targetsCopy);
 
         const currentTargetElt = document.querySelector(`.${target.domElt}`);
         currentTargetElt.style.position = 'absolute';
@@ -233,7 +213,21 @@ const MainComponent = () => {
 
         targetsCopy.push(newTarget);
         console.log('targetCopy APRES AJOUT', targetsCopy);
+        setFields(targetsCopy);
+
+        // await waitForFields()
+        // setTimeout(() => {
+        //     console.log('update');
+        // }, 2000)
         setTargets(targetsCopy);
+    }
+
+    const waitForFields =  () => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve();
+            }, 0)
+        })
     }
 
     const test = () => {
@@ -251,8 +245,9 @@ const MainComponent = () => {
     //      //targets.push(newTarget);
     //     setTargets((targets) => [...targets, newTarget]);
     //     console.log("les targets", targets)
-        console.log("Liste targets", targets);
+        console.log("Liste fields", fields);
         console.log("Liste moveAble", document.querySelectorAll('.moveable-control-box'))
+        // console.log("IsLoading ?", isLoading);
     }
 
     return (
@@ -260,51 +255,41 @@ const MainComponent = () => {
             <div className="sidebar" style={{height: "100vh", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
                 SIDEBAR
                 <button onClick={() => {test()}}>ZZ</button>
-
                 <div className="sidebar-signature">
-                    {targets.map(targetObj => {
-                        if (targetObj.type === SIGNATURE_TYPE)
-                            return <DraggableField type={targetObj.type} counter={targetObj.id} getStyle={getStyle}/>
+                    {fields.map(field => {
+                        if (field.type === SIGNATURE_TYPE)
+                            return <DraggableField type={field.type} counter={field.id} getStyle={getStyle}/>
                     })}
                 </div>
                 <div className="sidebar-name">
-                    {targets.map(targetObj => {
-                        if (targetObj.type === NAME_TYPE)
-                            return <DraggableField type={targetObj.type} counter={targetObj.id} getStyle={getStyle}/>
+                    {fields.map(field => {
+                        if (field.type === NAME_TYPE)
+                            return <DraggableField type={field.type} counter={field.id} getStyle={getStyle}/>
                     })}
                 </div>
                 <div className="sidebar-email">
-                    {targets.map(targetObj => {
-                        if (targetObj.type === EMAIL_TYPE)
-                            return <DraggableField type={targetObj.type} counter={targetObj.id} getStyle={getStyle}/>
+                    {fields.map(field => {
+                        if (field.type === EMAIL_TYPE)
+                            return <DraggableField type={field.type} counter={field.id} getStyle={getStyle}/>
                     })}
                 </div>
-                {/*{targets.map(target => (*/}
-                {/*    <div className={`target-${target.type}-${target.id}`}*/}
-                {/*         style={getStyle(target.type)}*/}
-                {/*    >*/}
-                {/*        {target.type.toUpperCase()}*/}
-                {/*    </div>*/}
-                {/*    )*/}
-                {/*)}*/}
-
-                {/*<div className="target" style={{width: 150, height: 50, backgroundColor: 'blue', position: 'absolute'}}>DRAGGABLE</div>*/}
             </div>
         <div className="MyComponent" style={{width: '75%'}}>
             {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
-            {/*<div className="header">React sample</div>*/}
+            <div className="header">React sample</div>
             <div className="webviewer" ref={viewer} style={{height: "100vh"}}></div>
         </div>
             {/* On créer un Moveable par target*/}
-            {!isLoading &&
+            {/*{!isLoading &&*/
                 targets.map(targetObj => {
                 // console.log(`DOM.target-${targetObj.type}-${targetObj.id}`, document.querySelector(`.target-${targetObj.type}-${targetObj.id}`))
                     console.log(targetObj.domElt)
                     console.log("QuerySelectpr",document.querySelector(`.${targetObj.domElt}`));
+                    const targetElt = document.querySelector(`.${targetObj.domElt}`);
                     return (
                         <>
                             <Moveable
-                                target={document.querySelector(`.${targetObj.domElt}`)}
+                                target={targetElt}
                                 container={null}
                                 origin={false}
                                 edge={false}
@@ -312,6 +297,8 @@ const MainComponent = () => {
                                 throttleDrag={0}
                                 onDragStart={({ target, clientX, clientY }) => {
                                     console.log("onDragStart", target);
+                                    console.log("clientX", clientX);
+                                    console.log("clientY", clientY);
                                 }}
                                 onDrag={({
                                              target,
@@ -327,10 +314,12 @@ const MainComponent = () => {
                                     // target!.style.top = `${top}px`; COM BY TUTO
                                     // console.log("onDrag translate", dist);
                                     target.style.transform = transform;
+                                    // target.style.zIndex = 2;
                                     // console.log("targetOBJ", targetObj)
                                     if (!targetObj.isActive) createMoveable(targetObj)
                                 }}
                                 onDragEnd={({ target, isDrag, clientX, clientY }) => {
+                                    // target.style.zIndex = 'auto';
                                     // console.log("onDragEnd", target, isDrag);
                                 }}
                             />
