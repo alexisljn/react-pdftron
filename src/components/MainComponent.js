@@ -15,6 +15,7 @@ const MainComponent = () => {
     const [signatureCounter, setSignatureCounter] = useState(1);
     const [emailCounter, setEmailCounter] = useState(1);
     const [nameCounter, setNameCounter] = useState(1);
+    const [isDragging, setIsDragging] = useState(false);
     // const [isLoading, setIsLoading] = useState(true);
 
     // const [target, setTarget] = React.useState();
@@ -250,9 +251,18 @@ const MainComponent = () => {
         // console.log("IsLoading ?", isLoading);
     }
 
+    const coverStyle = {
+        zIndex: 1000,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%'
+    }
+
     return (
         <>
-            <div className="sidebar" style={{height: "100vh", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
+            <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
                 SIDEBAR
                 <button onClick={() => {test()}}>ZZ</button>
                 <div className="sidebar-signature">
@@ -274,9 +284,11 @@ const MainComponent = () => {
                     })}
                 </div>
             </div>
-        <div className="MyComponent" style={{width: '75%'}}>
+        <div className="MyComponent" style={{width: '75%', height: '100%'}}>
             {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
-            <div className="header">React sample</div>
+            {isDragging &&
+            <div style={coverStyle}/>
+            }
             <div className="webviewer" ref={viewer} style={{height: "100vh"}}></div>
         </div>
             {/* On créer un Moveable par target*/}
@@ -299,6 +311,7 @@ const MainComponent = () => {
                                     console.log("onDragStart", target);
                                     console.log("clientX", clientX);
                                     console.log("clientY", clientY);
+                                    setIsDragging(true);
                                 }}
                                 onDrag={({
                                              target,
@@ -319,6 +332,7 @@ const MainComponent = () => {
                                     if (!targetObj.isActive) createMoveable(targetObj)
                                 }}
                                 onDragEnd={({ target, isDrag, clientX, clientY }) => {
+                                    setIsDragging(false);
                                     // target.style.zIndex = 'auto';
                                     // console.log("onDragEnd", target, isDrag);
                                 }}
