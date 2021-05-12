@@ -9,6 +9,8 @@ const MainComponent = () => {
     const [webViewer, setWebViewer] = useState(null);
     const viewer = useRef(null);
 
+    const [isDragging, setIsDragging] = useState(false);
+
     useEffect(() => {
         const loadWebViewer = async () => {
             const instance = await WebViewer(
@@ -64,8 +66,8 @@ const MainComponent = () => {
 
     const test = () => {
         const {docViewer} = webViewer;
-
-        console.log("docViewerr", docViewer);
+        console.log('viewer',viewer)
+        // console.log("docViewerr", docViewer);
     }
     const onDrag = (e, ui) => {
         // console.log(e,ui);
@@ -75,12 +77,25 @@ const MainComponent = () => {
         // if (ui.y >= 750) window.scrollBy(0, 2);
     }
 
+    const coverStyle = {
+        zIndex: 1000,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%'
+    }
+
     return (
         <>
             <button onClick={() => {test()}}>ZZ</button>
-            <div style={{height: "100vh", backgroundColor: "#E8E8E8", width: "25%"}}>
+            <div style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%"}}>
                 SIDEBAR
-                <Draggable bounds={"#global"} onDrag={(e, ui) => onDrag(e,ui)}>
+                <Draggable bounds={"#global"}
+                           onDrag={(e, ui) => onDrag(e,ui)}
+                           onStart={() => setIsDragging(true) }
+                           onStop={() => setIsDragging(false)}
+                >
                     <div className="target"
                          style={{width: 150, height: 50, backgroundColor: 'blue'}}>
                         DRAGGABLE
@@ -88,6 +103,9 @@ const MainComponent = () => {
                 </Draggable>
             </div>
         <div className="MyComponent" style={{width: '75%'}}>
+            {isDragging &&
+            <div style={coverStyle}/>
+            }
             {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
             {/*<div className="header">React sample</div>*/}
             {/*<div style={{width: '100%', height: 2000}}></div>*/}
