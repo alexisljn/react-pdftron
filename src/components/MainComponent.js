@@ -80,6 +80,16 @@ const MainComponent = () => {
         // });
     }, [])
 
+    useEffect(() => {
+        console.log('HELLOOOOOOO')
+        console.log('isDragging from useEffet', isDragging);
+        console.log('scrollTimer from useEffet', scrollTimer)
+        if (scrollTimer && !isDragging) {
+            console.log("Hello from UseEffect")
+            clearInterval(scrollTimer);
+        }
+    }, [isScrolling])
+
 
     const handleEvents = (instance) => {
         const { docViewer } = instance;
@@ -317,10 +327,16 @@ const MainComponent = () => {
        // Utiliser un intervalle de valeur pour savoir s'il faut scroll ou pas
        //  if (scrollTimer) return;
         setIsScrolling(true);
+
         scrollTimer = setInterval(() => {
-            const realField = getField(field.id, field.type);
-            console.log("Real Field Y", realField.yPosition);
-            console.log("saucisse");
+            console.log("isDraggin ?", isDragging);// Renvoie le resultat au moment de l'execution de scroll() pas du setInterval();
+            if (!isDragging) {
+                clearInterval(scrollTimer)
+                setIsScrolling(false);
+            }
+            // const realField = getField(field.id, field.type);
+            // console.log("Real Field Y", realField.yPosition);
+
             console.log("windowInnerHeight", window.innerHeight);
             console.log("clientHeifgh", containerToScroll.clientHeight);
             console.log("scrollTimer", scrollTimer);
@@ -345,6 +361,7 @@ const MainComponent = () => {
             {
                 console.log("AU BOUT")
                 clearInterval(scrollTimer);
+                setIsScrolling(false)
                 // scrollTimer = null
             }
         }, 100)
@@ -352,14 +369,7 @@ const MainComponent = () => {
         // setIsScrolling(false);
     }
 
-    const getField = (id, type) => {
-        let idx;
-        fields.forEach((field, index) => {
-            if (field.id === id && field.type === type) idx = index
-        })
 
-        return fields[idx];
-    }
 
     const coverStyle = {
         zIndex: 1000,
@@ -446,6 +456,7 @@ const MainComponent = () => {
                                 onDragEnd={({ target, isDrag, clientX, clientY }) => {
                                     console.log("ON DRAG END")
                                     setIsDragging(false);
+                                    clearInterval(scrollTimer);
                                     // target.style.zIndex = 'auto';
                                     // console.log("onDragEnd", target, isDrag);
                                 }}
