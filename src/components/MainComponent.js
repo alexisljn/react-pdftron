@@ -9,13 +9,15 @@ const MainComponent = () => {
 
     const [webViewer, setWebViewer] = useState(null);
     const viewer = useRef(null);
+    const windowInnerHeight = window.innerHeight;
 
     const [fields, setFields] = useState([]);
-    const [targets, setTargets] = useState([]);
+    // const [targets, setTargets] = useState([]);
     const [signatureCounter, setSignatureCounter] = useState(1);
     const [emailCounter, setEmailCounter] = useState(1);
     const [nameCounter, setNameCounter] = useState(1);
     const [isDragging, setIsDragging] = useState(false);
+    const [isScrolling, setIsScrolling] = useState(false);
     // const [isLoading, setIsLoading] = useState(true);
 
     // const [target, setTarget] = React.useState();
@@ -23,11 +25,14 @@ const MainComponent = () => {
         translate: [0,0],
     });
 
+    let scrollTimer = null;
+
     const SIGNATURE_TYPE = 'signature';
     const EMAIL_TYPE = 'email';
     const NAME_TYPE = 'name';
 
     useEffect(() => {
+        console.log('InnerHeight dès le début', windowInnerHeight);
         const loadWebViewer = async () => {
             const instance = await WebViewer(
                 {
@@ -38,7 +43,7 @@ const MainComponent = () => {
                 viewer.current,
             )
             setWebViewer(instance)
-            handleClick(instance)
+            handleEvents(instance)
         }
         loadWebViewer();
 
@@ -51,10 +56,10 @@ const MainComponent = () => {
         // setTargets(defaultFields);
         // setTargets(defaultFields)
 
-        waitForFields().then(() => {
-            setTargets(defaultFields);
-            // setIsLoading(false);
-        })
+        // waitForFields().then(() => {
+        //     // setTargets(defaultFields);
+        //     // setIsLoading(false);
+        // })
 
         // (async () => {
         //    await loadWebViewer()
@@ -75,21 +80,37 @@ const MainComponent = () => {
         // });
     }, [])
 
-    useEffect(() => {
-        // Splitter la liste en 3
-        console.log('USER EFFECT TARGETS')
-    },[signatureCounter, nameCounter, emailCounter])
 
-
-    const handleClick = (instance) => {
+    const handleEvents = (instance) => {
         const { docViewer } = instance;
         console.log('docViewer', docViewer);
         // e est un objet event avec des propriétés supp par pdfTron
         docViewer.on('click', (e) => {
             console.log('CLICK', e);
-
         })
+
+        // const docScrollBar = docViewer.getScrollViewElement()
+        // console.log('docScrollBar', docScrollBar);
+        // docScrollBar.addEventListener('scroll', () => {
+        //     // SCROLL IF NEEDED
+        //     // Savoir si un field est en bas de page et non "placé"
+        //     getBottomPageItem()
+        // })
     }
+
+    // const getBottomPageItem = () => {
+    //     // console.log('TRIGGER getBottomPageItem');
+    //     // console.log(fields);
+    //     let bool = false
+    //     fields.forEach((field) => {
+    //         // console.log('YPOS', field.yPosition)
+    //         if (field.yPosition + 50 >= (windowInnerHeight) && !field.isPlaced) {
+    //             console.log("Lui faut scroll", field);
+    //             bool = true;
+    //         }
+    //         return bool;
+    //     })
+    // }
 
     const incrementCounter = (type) => {
         let newValue;
@@ -152,18 +173,27 @@ const MainComponent = () => {
                 domElt: 'target-signature-1',
                 type: 'signature',
                 isActive: false,
+                isPlaced: false,
+                xPosition: false,
+                yPosition: false,
                 id: 1,
             },
             {
                 domElt: 'target-name-1',
                 type: 'name',
                 isActive: false,
+                isPlaced: false,
+                xPosition: false,
+                yPosition: false,
                 id: 1,
             },
             {
                 domElt: 'target-email-1',
                 type: 'email',
                 isActive: false,
+                isPlaced: false,
+                xPosition: false,
+                yPosition: false,
                 id: 1,
             }]
     }
@@ -209,6 +239,9 @@ const MainComponent = () => {
             domElt: `target-${target.type}-${newCounterValue}`,
             type: target.type,
             isActive: false,
+            isPlaced: false,
+            xPosition: false,
+            yPosition: false,
             id: newCounterValue
         }
 
@@ -220,7 +253,7 @@ const MainComponent = () => {
         // setTimeout(() => {
         //     console.log('update');
         // }, 2000)
-        setTargets(targetsCopy);
+        // setTargets(targetsCopy);
     }
 
     const waitForFields =  () => {
@@ -232,23 +265,100 @@ const MainComponent = () => {
     }
 
     const test = () => {
-        // const {docViewer} = webViewer;
-        //
-        // console.log("docViewerr", docViewer);
+        const {docViewer} = webViewer;
+        console.log("docViewerr", docViewer);
+        // docViewer.displayLastPage()
+        console.log("Total Page",docViewer.getPageCount());
+        console.log("Numero Page",docViewer.getCurrentPage());
+        console.log(docViewer.getPageHeight(docViewer.getCurrentPage())); // HAUTEUR DE LA PAGE COURANTE DU PDF
+        console.log('getScrollViewElement', docViewer.getScrollViewElement())
+        console.log(window.innerHeight); // RENVOIE HAUTEUR DE WINDOW
 
-        // addTarget({domElt:"toto",type:'toto'})
-    //     const newTarget = {
-    //         // domElt: document.querySelector(".target-signature-2"),
-    //         type: 'signatursse',
-    //         isActive: false,
-    //         id: 4,
-    //     }
-    //      //targets.push(newTarget);
-    //     setTargets((targets) => [...targets, newTarget]);
-    //     console.log("les targets", targets)
         console.log("Liste fields", fields);
         console.log("Liste moveAble", document.querySelectorAll('.moveable-control-box'))
-        // console.log("IsLoading ?", isLoading);
+        console.log("IsScrlling ?", isScrolling);
+        const containerToScrollElt = docViewer.getScrollViewElement();
+        // containerToScrollElt.scrollBy(0,100)
+        console.log(window.scrollY);
+    }
+
+    const onDragHandler = (xPosition, yPosition, field) => {
+        const { docViewer } = webViewer;
+        // const coeff =  window.innerHeight - docViewer.getPageHeight(docViewer.getPageCount())
+        // console.log("coeff", coeff);
+        // // console.log('position sur laquelle intervenir', window.innerHeight - coeff);
+        // GESTION DESCENTE
+        // Enregistrer dans le state les nouvelles coords
+
+        // const fieldsCopy = JSON.parse(JSON.stringify(fields));
+        //
+        // fieldsCopy.forEach((fieldCopy => {
+        //     if (fieldCopy.id === field.id && fieldCopy.type === field.type)
+        //         fieldCopy.yPosition = yPosition;
+        //         fieldCopy.xPosition = xPosition;
+        // }))
+
+        fields.forEach((fieldCopy => {
+            if (fieldCopy.id === field.id && fieldCopy.type === field.type)
+                fieldCopy.yPosition = yPosition;
+            fieldCopy.xPosition = xPosition;
+        }))
+        setFields(fields)
+
+        // setFields(fieldsCopy)
+
+        const containerToScrollElt = docViewer.getScrollViewElement();
+        if (yPosition + 50 >= window.innerHeight && !isScrolling) scroll(containerToScrollElt, field)// containerToScrollElt.scrollBy(0,10);
+
+        // setFields(fieldsCopy)
+    }
+
+    const scroll = (containerToScroll, field) => {
+       // Utiliser un intervalle de valeur pour savoir s'il faut scroll ou pas
+       //  if (scrollTimer) return;
+        setIsScrolling(true);
+        scrollTimer = setInterval(() => {
+            const realField = getField(field.id, field.type);
+            console.log("Real Field Y", realField.yPosition);
+            console.log("saucisse");
+            console.log("windowInnerHeight", window.innerHeight);
+            console.log("clientHeifgh", containerToScroll.clientHeight);
+            console.log("scrollTimer", scrollTimer);
+            console.log("Y", field.yPosition)
+            //TODO Repasser a 10 (ou autre) pour le scroll Y
+            containerToScroll.scrollBy(0,20);
+
+            // console.log("position field change ou non ?", field);
+            if (field.yPosition + 50 < window.innerHeight) {
+                clearInterval(scrollTimer)
+                // scrollTimer = null
+                console.log("hors zone");
+                console.log(scrollTimer);
+                setIsScrolling(false);
+                // return;
+            }
+
+
+            if (containerToScroll.scrollHeight -
+                containerToScroll.scrollTop <=
+                containerToScroll.clientHeight)
+            {
+                console.log("AU BOUT")
+                clearInterval(scrollTimer);
+                // scrollTimer = null
+            }
+        }, 100)
+               //  containerToScroll.scrollBy(0,10)
+        // setIsScrolling(false);
+    }
+
+    const getField = (id, type) => {
+        let idx;
+        fields.forEach((field, index) => {
+            if (field.id === id && field.type === type) idx = index
+        })
+
+        return fields[idx];
     }
 
     const coverStyle = {
@@ -293,10 +403,10 @@ const MainComponent = () => {
         </div>
             {/* On créer un Moveable par target*/}
             {/*{!isLoading &&*/
-                targets.map(targetObj => {
+                fields.map(targetObj => {
                 // console.log(`DOM.target-${targetObj.type}-${targetObj.id}`, document.querySelector(`.target-${targetObj.type}-${targetObj.id}`))
-                    console.log(targetObj.domElt)
-                    console.log("QuerySelectpr",document.querySelector(`.${targetObj.domElt}`));
+                //     console.log(targetObj.domElt)
+                //     console.log("QuerySelectpr",document.querySelector(`.${targetObj.domElt}`));
                     const targetElt = document.querySelector(`.${targetObj.domElt}`);
                     return (
                         <>
@@ -322,6 +432,7 @@ const MainComponent = () => {
                                              transform,
                                              clientX, clientY,
                                          }) => {
+                                    // console.log(clientX, clientY);
                                     // console.log("onDrag left, top", left, top);
                                     // target!.style.left = `${left}px`; COM BY TUTO
                                     // target!.style.top = `${top}px`; COM BY TUTO
@@ -329,9 +440,11 @@ const MainComponent = () => {
                                     target.style.transform = transform;
                                     // target.style.zIndex = 2;
                                     // console.log("targetOBJ", targetObj)
+                                    onDragHandler(clientX, clientY, targetObj)
                                     if (!targetObj.isActive) createMoveable(targetObj)
                                 }}
                                 onDragEnd={({ target, isDrag, clientX, clientY }) => {
+                                    console.log("ON DRAG END")
                                     setIsDragging(false);
                                     // target.style.zIndex = 'auto';
                                     // console.log("onDragEnd", target, isDrag);
