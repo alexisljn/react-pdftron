@@ -10,6 +10,7 @@ class ClassComponent extends React.Component {
     SIGNATURE_TYPE = 'signature';
     EMAIL_TYPE = 'email';
     NAME_TYPE = 'name';
+    DETECTION_ZONE_LIMIT = 50;
 
     constructor(props) {
         super(props);
@@ -175,33 +176,59 @@ class ClassComponent extends React.Component {
     onDragHandler = (xPosition, yPosition, field) => {
         const { webViewer, fields, isScrolling } = this.state;
         const { docViewer } = webViewer;
+        const bottomDetectionZone = window.innerHeight - this.DETECTION_ZONE_LIMIT;
+        const topDetectionZone = this.DETECTION_ZONE_LIMIT;
+
         fields.forEach((fieldCopy => {
-            if (fieldCopy.id === field.id && fieldCopy.type === field.type)
+            if (fieldCopy.id === field.id && fieldCopy.type === field.type) {
                 fieldCopy.yPosition = yPosition;
-            fieldCopy.xPosition = xPosition;
+                fieldCopy.xPosition = xPosition;
+            }
+
         }))
 
-        this.setState({fields})
+        this.setState({fields, targets: fields})
 
         const containerToScrollElt = docViewer.getScrollViewElement();
-        const coeff = window.innerHeight - containerToScrollElt.clientHeight;
 
-        if ((yPosition + 50 >= window.innerHeight || yPosition - 50 <= coeff) && !isScrolling) this.scroll(containerToScrollElt, field)
+
+        const coeff = window.innerHeight - containerToScrollElt.clientHeight;
+        console.log("fieldY from Handler", field.yPosition);
+        if ((yPosition + 50 >= window.innerHeight || yPosition - 50 <= coeff) && !isScrolling) this.scroll(containerToScrollElt, {type:field.type, id:field.id})
         // if (yPosition - 50 <= coeff) console.log("SCROLL EN HAUT")
     }
 
-    scroll = (containerToScroll, field) => {
+    scroll = (containerToScroll, {type,id}) => {
         const { isDragging } = this.state;
+        const coeff = window.innerHeight - containerToScroll.clientHeight;
+
+        let field = this.getField(type,id)
         console.log("isDraggin ?", isDragging);
         console.log('field', field.yPosition)
         this.setState({isScrolling: true});
-        const coeff = window.innerHeight - containerToScroll.clientHeight;
-
+        let previousPosition = 0
         this.scrollTimer = setInterval(() => {
+            const yPositionDiff = field.yPosition - previousPosition
+            // const scrollDirection = yPositionDiff > 0
             const scrollValue = field.yPosition + 50 >= window.innerHeight ? 20 : -20
-            containerToScroll.scrollBy(0,scrollValue);
+            console.log('field', field.yPosition)
+            // containerToScroll.scrollBy(0,scrollValue);
+            // if (field.yPosition >= bottomDetectionZone) {
+            //     console.log("bottomDetectionZone", bottomDetectionZone)
+            //
+            // } else if (field.yPosition <= topDetectionZone) {
+            //     console.log('topDetect', topDetectionZone)
+            // }
 
+
+            // On descends vers le bas
             if (scrollValue > 0) {
+
+                if (yPositionDiff >= 0) {
+                    containerToScroll.scrollBy(0,scrollValue);
+                }
+
+                // containerToScroll.scrollBy(0,scrollValue);
 
                 if (field.yPosition + 50 < window.innerHeight) {
                     clearInterval(this.scrollTimer)
@@ -221,6 +248,12 @@ class ClassComponent extends React.Component {
 
 
             } else {
+                console.log("DR COX");
+                if (yPositionDiff <= 0) {
+                    containerToScroll.scrollBy(0,scrollValue);
+                }
+
+
                 if (field.yPosition - 50 > coeff) {
                     clearInterval(this.scrollTimer)
                     // scrollTimer = null
@@ -236,9 +269,20 @@ class ClassComponent extends React.Component {
                 }
 
             }
+            previousPosition = field.yPosition;
         }, 100)
+    }
 
+    getField = (type, id) => {
+        const { fields } = this.state
+        let Dfield = {}
+        fields.forEach(field => {
+            if (field.type === type && field.id === id) Dfield = field
+        })
 
+        if (Dfield.hasOwnProperty('type')) return Dfield;
+
+        throw new Error('merde');
     }
 
     test = () => {
