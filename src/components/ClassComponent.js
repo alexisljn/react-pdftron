@@ -184,7 +184,10 @@ class ClassComponent extends React.Component {
         this.setState({fields})
 
         const containerToScrollElt = docViewer.getScrollViewElement();
-        if (yPosition + 50 >= window.innerHeight && !isScrolling) this.scroll(containerToScrollElt, field)
+        const coeff = window.innerHeight - containerToScrollElt.clientHeight;
+
+        if ((yPosition + 50 >= window.innerHeight || yPosition - 50 <= coeff) && !isScrolling) this.scroll(containerToScrollElt, field)
+        // if (yPosition - 50 <= coeff) console.log("SCROLL EN HAUT")
     }
 
     scroll = (containerToScroll, field) => {
@@ -192,31 +195,47 @@ class ClassComponent extends React.Component {
         console.log("isDraggin ?", isDragging);
         console.log('field', field.yPosition)
         this.setState({isScrolling: true});
+        const coeff = window.innerHeight - containerToScroll.clientHeight;
 
         this.scrollTimer = setInterval(() => {
-            console.log("isDraggin ?", isDragging);
-            containerToScroll.scrollBy(0,20);
-            console.log('field', field.yPosition)
+            const scrollValue = field.yPosition + 50 >= window.innerHeight ? 20 : -20
+            containerToScroll.scrollBy(0,scrollValue);
 
-            if (field.yPosition + 50 < window.innerHeight) {
-                clearInterval(this.scrollTimer)
-                // scrollTimer = null
-                console.log("hors zone");
-                console.log(this.scrollTimer);
-                this.setState({isScrolling: false})
+            if (scrollValue > 0) {
+
+                if (field.yPosition + 50 < window.innerHeight) {
+                    clearInterval(this.scrollTimer)
+                    // scrollTimer = null
+                    console.log("hors zone");
+                    console.log(this.scrollTimer);
+                    this.setState({isScrolling: false})
+                }
+
+                if (containerToScroll.scrollHeight -
+                    containerToScroll.scrollTop <=
+                    containerToScroll.clientHeight) {
+                    console.log("AU BOUT")
+                    clearInterval(this.scrollTimer);
+                    this.setState({isScrolling: false})
+                }
+
+
+            } else {
+                if (field.yPosition - 50 > coeff) {
+                    clearInterval(this.scrollTimer)
+                    // scrollTimer = null
+                    console.log("hors zone");
+                    console.log(this.scrollTimer);
+                    this.setState({isScrolling: false})
+                }
+
+                if (containerToScroll.scrollTop === 0) {
+                    console.log("AU TOP")
+                    clearInterval(this.scrollTimer);
+                    this.setState({isScrolling: false})
+                }
+
             }
-
-
-            if (containerToScroll.scrollHeight -
-                containerToScroll.scrollTop <=
-                containerToScroll.clientHeight)
-            {
-                console.log("AU BOUT")
-                clearInterval(this.scrollTimer);
-                this.setState({isScrolling: false})
-                // scrollTimer = null
-            }
-
         }, 100)
 
 
