@@ -164,6 +164,21 @@ class ClassComponent extends React.Component {
         // this.setState({targets: targetsCopy});
     }
 
+    deleteField = (type, id) => {
+        const { fields } = this.state;
+        const fieldsCopy = Array.from(fields);
+        let indexToDelete = null;
+        fieldsCopy.forEach((field, index) => {
+            if (field.id === id && field.type === type);
+                indexToDelete = index;
+        })
+        console.log("idxToDelete", indexToDelete);
+        if (indexToDelete) {
+            fieldsCopy.splice(indexToDelete,1);
+            this.setState({fields: fieldsCopy});
+        }
+    }
+
     onDragHandler = (xPosition, yPosition, field) => {
         const { webViewer, fields, isScrolling } = this.state;
         const { docViewer } = webViewer;
@@ -253,12 +268,12 @@ class ClassComponent extends React.Component {
         const { docViewer } = webViewer;
         const containerToScrollElt = docViewer.getScrollViewElement();
         // console.log("toto");
-        // console.log(this.state.fields);
+        console.log(this.state.fields);
         // console.log("isScrolling test", this.state.isScrolling);
         // const position = containerToScrollElt.getBoundingClientRect();
-        const position = document.querySelector('.MyComponent').getBoundingClientRect();
-        console.log('left', position.left);
-        console.log('top', position.top + window.scrollY)
+        // const position = document.querySelector('.MyComponent').getBoundingClientRect();
+        // console.log('left', position.left);
+        // console.log('top', position.top + window.scrollY)
 
     }
 
@@ -272,19 +287,40 @@ class ClassComponent extends React.Component {
                 <div className="sidebar-signature">
                     {fields.map(field => {
                         if (field.type === this.SIGNATURE_TYPE)
-                            return <DraggableField type={field.type} counter={field.id} getStyle={this.getStyle}/>
+                            return (
+                                <DraggableField
+                                    type={field.type}
+                                    id={field.id}
+                                    getStyle={this.getStyle}
+                                    deleteField={this.deleteField}
+                                />
+                            )
                     })}
                 </div>
                 <div className="sidebar-name">
                     {fields.map(field => {
                         if (field.type === this.NAME_TYPE)
-                            return <DraggableField type={field.type} counter={field.id} getStyle={this.getStyle}/>
+                            return (
+                                <DraggableField
+                                    type={field.type}
+                                    id={field.id}
+                                    getStyle={this.getStyle}
+                                    deleteField={this.deleteField}
+                                />
+                            )
                     })}
                 </div>
                 <div className="sidebar-email">
                     {fields.map(field => {
                         if (field.type === this.EMAIL_TYPE)
-                            return <DraggableField type={field.type} counter={field.id} getStyle={this.getStyle}/>
+                            return (
+                                <DraggableField
+                                    type={field.type}
+                                    id={field.id}
+                                    getStyle={this.getStyle}
+                                    deleteField={this.deleteField}
+                                />
+                            )
                     })}
                 </div>
             </div>
@@ -311,6 +347,7 @@ class ClassComponent extends React.Component {
                                     edge={false}
                                     draggable={true}
                                     throttleDrag={0}
+                                    // onClick={(e) => e.inputEvent.stopImmediatePropagation()}
                                     onDragStart={({ target, clientX, clientY }) => {
                                         console.log("onDragStart", target);
                                         console.log("clientX", clientX);
