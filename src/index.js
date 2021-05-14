@@ -4,6 +4,7 @@ import "core-js";
 import React from "react";
 import { render } from "react-dom";
 import MainComponent from "./components/MainComponent";
+import ClassComponent from "./components/ClassComponent";
 
 function App() {
 
@@ -11,7 +12,8 @@ function App() {
 
     return (
         <div id="global" style={{display: 'flex', height: '100vh', overflow: 'hidden'}}>
-            <MainComponent/>
+            {/*<MainComponent/>*/}
+            <ClassComponent/>
         </div>
     )
 }

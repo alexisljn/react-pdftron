@@ -4,6 +4,7 @@ import regeneratorRuntime from "regenerator-runtime";
 import WebViewer from "@pdftron/webviewer";
 import Moveable from "react-moveable";
 import DraggableField from "./DraggableField";
+import useInterval from "../useInterval";
 
 const MainComponent = () => {
 
@@ -456,6 +457,7 @@ const MainComponent = () => {
                                 onDragEnd={({ target, isDrag, clientX, clientY }) => {
                                     console.log("ON DRAG END")
                                     setIsDragging(false);
+                                    console.log("scrollTimer from DragEnd", scrollTimer);
                                     clearInterval(scrollTimer);
                                     // target.style.zIndex = 'auto';
                                     // console.log("onDragEnd", target, isDrag);
