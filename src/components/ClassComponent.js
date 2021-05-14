@@ -192,11 +192,11 @@ class ClassComponent extends React.Component {
 
         this.setState({fields, targets: fields})
 
-        if (field.yPosition >= bottomDetectionZone) {
+        if (field.yPosition >= bottomDetectionZone && this.isItemInPdfZone(field.xPosition)) {
             // console.log("bottomDetectionZone", bottomDetectionZone)
             this.scroll(this.SCROLL_VALUE, containerToScrollElt);
 
-        } else if (field.yPosition <= topDetectionZone) {
+        } else if (field.yPosition <= topDetectionZone && this.isItemInPdfZone(field.xPosition)) {
             // console.log('topDetect', topDetectionZone)
             this.scroll(-this.SCROLL_VALUE, containerToScrollElt);
         } else {
@@ -206,7 +206,8 @@ class ClassComponent extends React.Component {
                 this.scrollTimer = null;
             }
 
-            this.setState({isScrolling: false});
+            if (this.state.isScrolling)
+                this.setState({isScrolling: false});
         }
     }
 
@@ -219,29 +220,40 @@ class ClassComponent extends React.Component {
         this.scrollTimer = setInterval(() => {
             containerToScroll.scrollBy(0,scrollValue);
 
-            // Hit the bottom TODO Facto condition
-            if (containerToScroll.scrollHeight - containerToScroll.scrollTop <= containerToScroll.clientHeight) {
+            if (this.hasScrollingHitTheBottom(containerToScroll)) {
                 console.log("AU BOUT")
                 clearInterval(this.scrollTimer);
                 this.scrollTimer = null;
             }
 
-            // Hit the top TODO Facto condition
-            if (containerToScroll.scrollTop === 0) {
+            if (this.hasScrollingHitTheTop(containerToScroll)) {
                 console.log("AU TOP")
                 clearInterval(this.scrollTimer);
                 this.setState({isScrolling: false})
             }
-
 
         }, this.SET_INTERVAL_DELAY)
     }
 
     isPdfNotScrollable = (scrollValue, containerToScroll) => {
         if (scrollValue < 0)
-            return containerToScroll.scrollTop === 0;
+            return this.hasScrollingHitTheTop(containerToScroll)
 
+        return this.hasScrollingHitTheBottom(containerToScroll)
+    }
+
+    hasScrollingHitTheTop = (containerToScroll) => {
+        return containerToScroll.scrollTop === 0;
+    }
+
+    hasScrollingHitTheBottom = (containerToScroll) => {
         return containerToScroll.scrollHeight - containerToScroll.scrollTop <= containerToScroll.clientHeight;
+    }
+
+    isItemInPdfZone = (xPosition) => {
+        const position = document.querySelector('.MyComponent').getBoundingClientRect();
+
+        return xPosition >= position.left;
     }
 
     scroll2 = (containerToScroll, {type,id}) => {
@@ -324,9 +336,16 @@ class ClassComponent extends React.Component {
     }
 
     test = () => {
-        console.log("toto");
-        console.log(this.state.fields);
-        console.log("isScrolling test", this.state.isScrolling);
+        const { webViewer} = this.state;
+        const { docViewer } = webViewer;
+        const containerToScrollElt = docViewer.getScrollViewElement();
+        // console.log("toto");
+        // console.log(this.state.fields);
+        // console.log("isScrolling test", this.state.isScrolling);
+        // const position = containerToScrollElt.getBoundingClientRect();
+        const position = document.querySelector('.MyComponent').getBoundingClientRect();
+        console.log('left', position.left);
+        console.log('top', position.top + window.scrollY)
 
     }
 
@@ -356,7 +375,7 @@ class ClassComponent extends React.Component {
                     })}
                 </div>
             </div>
-            <div className="MyComponent" style={{width: '75%', height: '100%'}}>
+            <div id="pdf-wrapper" className="MyComponent" style={{width: '75%', height: '100%'}}>
                 {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
                 {isDragging &&
                 <div style={this.coverStyle}/>
