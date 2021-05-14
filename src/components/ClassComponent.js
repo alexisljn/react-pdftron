@@ -19,12 +19,12 @@ class ClassComponent extends React.Component {
         this.state = {
             webViewer: null,
             fields: [],
-            targets: [],
             signatureCounter: 1,
             emailCounter: 1,
             nameCounter: 1,
             isDragging: false,
             isScrolling: false,
+            isLoading: true,
             frame: {translate: [0,0]}
         }
         this.viewer = createRef();
@@ -43,7 +43,7 @@ class ClassComponent extends React.Component {
         const defaultFields = this.getDefaultFields();
 
         this.setState({webViewer: instance, fields: defaultFields});
-        this.setState({targets: defaultFields});
+        this.setState({isLoading: false});
     }
 
     getDefaultFields = () => {
@@ -104,15 +104,6 @@ class ClassComponent extends React.Component {
         }
     }
 
-    coverStyle = {
-        zIndex: 1000,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%'
-    }
-
     incrementCounter = (type) => {
         let newValue;
         switch (type) {
@@ -142,26 +133,24 @@ class ClassComponent extends React.Component {
     }
 
 
-    createMoveable = (target) => {
+    createMoveable = (field) => {
         const { fields } = this.state;
 
-        const targetsCopy = JSON.parse(JSON.stringify(fields));
+        const fieldsCopy = JSON.parse(JSON.stringify(fields));
 
-        targetsCopy.forEach((targetFromState, index) => {
-            if (targetFromState.id === target.id && targetFromState.type === target.type)
-                targetFromState['isActive'] = true;
+        fieldsCopy.forEach((fieldFromState, index) => {
+            if (fieldFromState.id === field.id && fieldFromState.type === field.type)
+                fieldFromState['isActive'] = true;
         })
 
-        const currentTargetElt = document.querySelector(`.${target.domElt}`);
-        currentTargetElt.style.position = 'absolute';
+        const currentFieldElt = document.querySelector(`.${field.domElt}`);
+        currentFieldElt.style.position = 'absolute';
 
-        const newCounterValue = this.incrementCounter(target.type)
-        // const newDomTargetName = createDOMTarget(target.type, newCounterValue)
+        const newCounterValue = this.incrementCounter(field.type)
 
-        const newTarget = {
-            // domElt: newDomTargetName,
-            domElt: `target-${target.type}-${newCounterValue}`,
-            type: target.type,
+        const newField= {
+            domElt: `target-${field.type}-${newCounterValue}`,
+            type: field.type,
             isActive: false,
             isPlaced: false,
             xPosition: false,
@@ -169,10 +158,10 @@ class ClassComponent extends React.Component {
             id: newCounterValue
         }
 
-        targetsCopy.push(newTarget);
-        console.log('targetCopy APRES AJOUT', targetsCopy);
-        this.setState({fields: targetsCopy});
-        this.setState({targets: targetsCopy});
+        fieldsCopy.push(newField);
+        console.log('targetCopy APRES AJOUT', fieldsCopy);
+        this.setState({fields:fieldsCopy});
+        // this.setState({targets: targetsCopy});
     }
 
     onDragHandler = (xPosition, yPosition, field) => {
@@ -183,14 +172,17 @@ class ClassComponent extends React.Component {
         const topDetectionZone =  (window.innerHeight - containerToScrollElt.clientHeight) + this.DETECTION_ZONE_LIMIT;
 
         // Updating new position
+        let previousYPosition = 0;
+
         fields.forEach((fieldCopy => {
             if (fieldCopy.id === field.id && fieldCopy.type === field.type) {
                 fieldCopy.yPosition = yPosition;
                 fieldCopy.xPosition = xPosition;
+                previousYPosition = Number(fieldCopy.yPosition);
             }
         }))
 
-        this.setState({fields, targets: fields})
+        this.setState({fields})
 
         if (field.yPosition >= bottomDetectionZone && this.isItemInPdfZone(field.xPosition)) {
             // console.log("bottomDetectionZone", bottomDetectionZone)
@@ -256,85 +248,6 @@ class ClassComponent extends React.Component {
         return xPosition >= position.left;
     }
 
-    scroll2 = (containerToScroll, {type,id}) => {
-        const { isDragging } = this.state;
-        const coeff = window.innerHeight - containerToScroll.clientHeight;
-
-        let field = this.getField(type,id)
-        console.log("isDraggin ?", isDragging);
-        console.log('field', field.yPosition)
-        this.setState({isScrolling: true});
-        let previousPosition = 0
-        this.scrollTimer = setInterval(() => {
-            const yPositionDiff = field.yPosition - previousPosition
-            // const scrollDirection = yPositionDiff > 0
-            const scrollValue = field.yPosition + 50 >= window.innerHeight ? 20 : -20
-            console.log('field', field.yPosition)
-            // containerToScroll.scrollBy(0,scrollValue);
-            // On descends vers le bas
-            if (scrollValue > 0) {
-
-                if (yPositionDiff >= 0) {
-                    containerToScroll.scrollBy(0,scrollValue);
-                }
-
-                // containerToScroll.scrollBy(0,scrollValue);
-
-                if (field.yPosition + 50 < window.innerHeight) {
-                    clearInterval(this.scrollTimer)
-                    // scrollTimer = null
-                    console.log("hors zone");
-                    console.log(this.scrollTimer);
-                    this.setState({isScrolling: false})
-                }
-
-                if (containerToScroll.scrollHeight -
-                    containerToScroll.scrollTop <=
-                    containerToScroll.clientHeight) {
-                    console.log("AU BOUT")
-                    clearInterval(this.scrollTimer);
-                    this.setState({isScrolling: false})
-                }
-
-
-            } else {
-                console.log("DR COX");
-                if (yPositionDiff <= 0) {
-                    containerToScroll.scrollBy(0,scrollValue);
-                }
-
-
-                if (field.yPosition - 50 > coeff) {
-                    clearInterval(this.scrollTimer)
-                    // scrollTimer = null
-                    console.log("hors zone");
-                    console.log(this.scrollTimer);
-                    this.setState({isScrolling: false})
-                }
-
-                if (containerToScroll.scrollTop === 0) {
-                    console.log("AU TOP")
-                    clearInterval(this.scrollTimer);
-                    this.setState({isScrolling: false})
-                }
-
-            }
-            previousPosition = field.yPosition;
-        }, 100)
-    }
-
-    getField = (type, id) => {
-        const { fields } = this.state
-        let Dfield = {}
-        fields.forEach(field => {
-            if (field.type === type && field.id === id) Dfield = field
-        })
-
-        if (Dfield.hasOwnProperty('type')) return Dfield;
-
-        throw new Error('merde');
-    }
-
     test = () => {
         const { webViewer} = this.state;
         const { docViewer } = webViewer;
@@ -350,7 +263,7 @@ class ClassComponent extends React.Component {
     }
 
     render() {
-        const {fields, targets, isDragging } = this.state;
+        const {fields, isDragging } = this.state;
 
         return (<>
             <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
@@ -378,13 +291,13 @@ class ClassComponent extends React.Component {
             <div id="pdf-wrapper" className="MyComponent" style={{width: '75%', height: '100%'}}>
                 {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
                 {isDragging &&
-                <div style={this.coverStyle}/>
+                <div style={this.getCoverStyle()}/>
                 }
                 <div className="webviewer" ref={this.viewer} style={{height: "100vh"}}></div>
             </div>
             {/* On créer un Moveable par target*/}
             {
-                targets.map(targetObj => {
+                fields.map(targetObj => {
                         // console.log(`DOM.target-${targetObj.type}-${targetObj.id}`, document.querySelector(`.target-${targetObj.type}-${targetObj.id}`))
                         //     console.log(targetObj.domElt)
                         //     console.log("QuerySelectpr",document.querySelector(`.${targetObj.domElt}`));
