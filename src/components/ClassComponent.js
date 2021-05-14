@@ -11,6 +11,8 @@ class ClassComponent extends React.Component {
     EMAIL_TYPE = 'email';
     NAME_TYPE = 'name';
     DETECTION_ZONE_LIMIT = 50;
+    SET_INTERVAL_DELAY = 50;
+    SCROLL_VALUE = 20;
 
     constructor(props) {
         super(props);
@@ -176,29 +178,73 @@ class ClassComponent extends React.Component {
     onDragHandler = (xPosition, yPosition, field) => {
         const { webViewer, fields, isScrolling } = this.state;
         const { docViewer } = webViewer;
+        const containerToScrollElt = docViewer.getScrollViewElement();
         const bottomDetectionZone = window.innerHeight - this.DETECTION_ZONE_LIMIT;
-        const topDetectionZone = this.DETECTION_ZONE_LIMIT;
+        const topDetectionZone =  (window.innerHeight - containerToScrollElt.clientHeight) + this.DETECTION_ZONE_LIMIT;
 
+        // Updating new position
         fields.forEach((fieldCopy => {
             if (fieldCopy.id === field.id && fieldCopy.type === field.type) {
                 fieldCopy.yPosition = yPosition;
                 fieldCopy.xPosition = xPosition;
             }
-
         }))
 
         this.setState({fields, targets: fields})
 
-        const containerToScrollElt = docViewer.getScrollViewElement();
+        if (field.yPosition >= bottomDetectionZone) {
+            // console.log("bottomDetectionZone", bottomDetectionZone)
+            this.scroll(this.SCROLL_VALUE, containerToScrollElt);
 
+        } else if (field.yPosition <= topDetectionZone) {
+            // console.log('topDetect', topDetectionZone)
+            this.scroll(-this.SCROLL_VALUE, containerToScrollElt);
+        } else {
 
-        const coeff = window.innerHeight - containerToScrollElt.clientHeight;
-        console.log("fieldY from Handler", field.yPosition);
-        if ((yPosition + 50 >= window.innerHeight || yPosition - 50 <= coeff) && !isScrolling) this.scroll(containerToScrollElt, {type:field.type, id:field.id})
-        // if (yPosition - 50 <= coeff) console.log("SCROLL EN HAUT")
+            if (this.scrollTimer) {
+                clearInterval(this.scrollTimer);
+                this.scrollTimer = null;
+            }
+
+            this.setState({isScrolling: false});
+        }
     }
 
-    scroll = (containerToScroll, {type,id}) => {
+    scroll = (scrollValue, containerToScroll) => {
+
+        if (this.state.isScrolling || this.isPdfNotScrollable(scrollValue,containerToScroll)) return;
+
+        this.setState({isScrolling: true});
+
+        this.scrollTimer = setInterval(() => {
+            containerToScroll.scrollBy(0,scrollValue);
+
+            // Hit the bottom TODO Facto condition
+            if (containerToScroll.scrollHeight - containerToScroll.scrollTop <= containerToScroll.clientHeight) {
+                console.log("AU BOUT")
+                clearInterval(this.scrollTimer);
+                this.scrollTimer = null;
+            }
+
+            // Hit the top TODO Facto condition
+            if (containerToScroll.scrollTop === 0) {
+                console.log("AU TOP")
+                clearInterval(this.scrollTimer);
+                this.setState({isScrolling: false})
+            }
+
+
+        }, this.SET_INTERVAL_DELAY)
+    }
+
+    isPdfNotScrollable = (scrollValue, containerToScroll) => {
+        if (scrollValue < 0)
+            return containerToScroll.scrollTop === 0;
+
+        return containerToScroll.scrollHeight - containerToScroll.scrollTop <= containerToScroll.clientHeight;
+    }
+
+    scroll2 = (containerToScroll, {type,id}) => {
         const { isDragging } = this.state;
         const coeff = window.innerHeight - containerToScroll.clientHeight;
 
@@ -213,14 +259,6 @@ class ClassComponent extends React.Component {
             const scrollValue = field.yPosition + 50 >= window.innerHeight ? 20 : -20
             console.log('field', field.yPosition)
             // containerToScroll.scrollBy(0,scrollValue);
-            // if (field.yPosition >= bottomDetectionZone) {
-            //     console.log("bottomDetectionZone", bottomDetectionZone)
-            //
-            // } else if (field.yPosition <= topDetectionZone) {
-            //     console.log('topDetect', topDetectionZone)
-            // }
-
-
             // On descends vers le bas
             if (scrollValue > 0) {
 
@@ -370,7 +408,6 @@ class ClassComponent extends React.Component {
                                     onDragEnd={({ target, isDrag, clientX, clientY }) => {
                                         console.log("ON DRAG END")
                                         this.setState({isDragging: false, isScrolling: false})
-                                        console.log("scrollTimer from DragEnd", this.scrollTimer);
                                         clearInterval(this.scrollTimer);
                                         // target.style.zIndex = 'auto';
                                         // console.log("onDragEnd", target, isDrag);
