@@ -2,6 +2,7 @@ import React, {createRef} from "react";
 import WebViewer from "@pdftron/webviewer";
 import DraggableField from "./DraggableField";
 import Moveable from "react-moveable";
+import Draggable from "react-draggable";
 
 class ClassComponent extends React.Component {
 
@@ -388,12 +389,14 @@ class ClassComponent extends React.Component {
                     {fields.map(field => {
                         if (field.type === this.SIGNATURE_TYPE)
                             return (
-                                <DraggableField
-                                    type={field.type}
-                                    id={field.id}
-                                    getStyle={this.getStyle}
-                                    deleteField={this.deleteField}
-                                />
+                                <Draggable>
+                                    <DraggableField
+                                        type={field.type}
+                                        id={field.id}
+                                        getStyle={this.getStyle}
+                                        deleteField={this.deleteField}
+                                    />
+                                </Draggable>
                             )
                     })}
                 </div>
@@ -401,12 +404,14 @@ class ClassComponent extends React.Component {
                     {fields.map(field => {
                         if (field.type === this.NAME_TYPE)
                             return (
-                                <DraggableField
-                                    type={field.type}
-                                    id={field.id}
-                                    getStyle={this.getStyle}
-                                    deleteField={this.deleteField}
-                                />
+                                <Draggable>
+                                    <DraggableField
+                                        type={field.type}
+                                        id={field.id}
+                                        getStyle={this.getStyle}
+                                        deleteField={this.deleteField}
+                                    />
+                                </Draggable>
                             )
                     })}
                 </div>
@@ -414,12 +419,14 @@ class ClassComponent extends React.Component {
                     {fields.map(field => {
                         if (field.type === this.EMAIL_TYPE)
                             return (
-                                <DraggableField
-                                    type={field.type}
-                                    id={field.id}
-                                    getStyle={this.getStyle}
-                                    deleteField={this.deleteField}
-                                />
+                                <Draggable>
+                                    <DraggableField
+                                        type={field.type}
+                                        id={field.id}
+                                        getStyle={this.getStyle}
+                                        deleteField={this.deleteField}
+                                    />
+                                </Draggable>
                             )
                     })}
                 </div>
@@ -431,66 +438,6 @@ class ClassComponent extends React.Component {
                 }
                 <div className="webviewer" ref={this.viewer} style={{height: "100vh"}}></div>
             </div>
-            {/* On créer un Moveable par target*/}
-            {
-                fields.map(targetObj => {
-                        // console.log(`DOM.target-${targetObj.type}-${targetObj.id}`, document.querySelector(`.target-${targetObj.type}-${targetObj.id}`))
-                        //     console.log(targetObj.domElt)
-                        //     console.log("QuerySelectpr",document.querySelector(`.${targetObj.domElt}`));
-                        const targetElt = document.querySelector(`#${targetObj.domElt}`);
-                        return (
-                            <>
-                                <Moveable
-                                    target={targetElt}
-                                    toto={"momo"}
-                                    container={null}
-                                    origin={false}
-                                    edge={false}
-                                    draggable={true}
-                                    throttleDrag={0}
-                                    ables={[this.getCustomAble()]}
-                                    tooltool={true}
-                                    // onClick={(e) => e.inputEvent.stopImmediatePropagation()}
-                                    onClick={() => console.log("ON CLICK FROM MOVEABLE")}
-                                    onDragStart={({ target, clientX, clientY }) => {
-                                        console.log("onDragStart", target);
-                                        console.log("clientX", clientX);
-                                        console.log("clientY", clientY);
-                                        this.setState({isDragging: true})
-                                    }}
-                                    onDrag={({
-                                                 target,
-                                                 beforeDelta, beforeDist,
-                                                 left, top,
-                                                 right, bottom,
-                                                 delta, dist,
-                                                 transform,
-                                                 clientX, clientY,
-                                             }) => {
-                                        // console.log(clientX, clientY);
-                                        // console.log("onDrag left, top", left, top);
-                                        // target!.style.left = `${left}px`; COM BY TUTO
-                                        // target!.style.top = `${top}px`; COM BY TUTO
-                                        // console.log("onDrag translate", dist);
-                                        target.style.transform = transform;
-                                        // target.style.zIndex = 2;
-                                        // console.log("targetOBJ", targetObj)
-                                        this.onDragHandler(clientX, clientY, targetObj)
-                                        if (!targetObj.isActive) this.createMoveable(targetObj)
-                                    }}
-                                    onDragEnd={({ target, isDrag, clientX, clientY }) => {
-                                        console.log("ON DRAG END")
-                                        this.setState({isDragging: false, isScrolling: false})
-                                        clearInterval(this.scrollTimer);
-                                        // target.style.zIndex = 'auto';
-                                        // console.log("onDragEnd", target, isDrag);
-                                    }}
-                                    // resizable={true}
-                                />
-                            </>
-                        )
-                    }
-                )}
         </>);
     }
 }
