@@ -3,13 +3,9 @@ import React from "react";
 const DraggableField = ({type, id, getStyle, deleteField}) => {
 
     return (
-        <div className={`target-${type}-${id}`}
-             style={getStyle(type)}
-        >
-
+        // <div className={`target-${type}-${id}`} style={getStyle(type)}>
+        <div id={`target-${type}-${id}`} style={getStyle(type)}>
             {type.toUpperCase()}
-            <button onClick={() => console.log("troto")}>X</button>
-            {/*<button onClick={() => deleteField(type, id)}>X</button>*/}
         </div>
     )
 }

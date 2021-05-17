@@ -85,6 +85,7 @@ class ClassComponent extends React.Component {
         }
 
         return {
+            zIndex: 5000,
             width: 150,
             height: 30,
             backgroundColor: colorMapping[inputName],
@@ -143,7 +144,7 @@ class ClassComponent extends React.Component {
                 fieldFromState['isActive'] = true;
         })
 
-        const currentFieldElt = document.querySelector(`.${field.domElt}`);
+        const currentFieldElt = document.querySelector(`#${field.domElt}`);
         currentFieldElt.style.position = 'absolute';
 
         const newCounterValue = this.incrementCounter(field.type)
@@ -263,11 +264,109 @@ class ClassComponent extends React.Component {
         return xPosition >= position.left;
     }
 
+    getCustomAble = () => {
+        const ctrlInstance = this;
+        return {
+            name: "tooltool",
+            // stateC: this.state,
+            render(moveable) {
+                const { renderPoses } = moveable.state;
+                // const deleteField = this.deleteField;
+                const deleteField = (type, id) => {
+                    console.log("GO DELETE", type, id);
+                    // console.log(ctrlInstance.state);
+                    // ctrlInstance.setState({signatureCounter: 30});
+
+                    const { fields } = ctrlInstance.state;
+                    const fieldsCopy = Array.from(fields);
+                    let indexToDelete = null;
+                    console.log("fields Original", fields);
+                    fieldsCopy.forEach((field, index) => {
+                        console.log("eachField", field.id, id, field.type, type);
+                        if (field.id === parseInt(id) && field.type === type)
+                            indexToDelete = index;
+                    })
+                    console.log("idxToDelete", indexToDelete);
+                    console.log("fieldToDelete according IDX", fields[indexToDelete]);
+                    if (indexToDelete !== 'null') {
+                        fieldsCopy.splice(indexToDelete,1);
+                        console.log('After Dekete', fieldsCopy)
+                       ctrlInstance.setState({fields: fieldsCopy});
+                    }
+                }
+                return (
+                    <button
+                        onClick={(e) => {
+                            console.log("e", e.nativeEvent);
+                            console.log("moveable", moveable.state)
+                            const domId = moveable.state.target.id;
+                            const [notUsed,type,id] = domId.split('-');
+                            e.nativeEvent.stopImmediatePropagation();
+                            deleteField(type, id);
+                        }}
+                        style={{
+                            position: "absolute",
+                            transform: `translate(-50%, -50%) translate(${renderPoses[1][0]}px, ${renderPoses[1][1]}px) translateZ(-50px)`,
+                            zIndex: 100,
+                        }}
+                    >
+                        X
+                    </button>
+                );
+            }
+        }
+    }
+
+    // customAble = {
+    //
+    //     name: "tooltool",
+    //     stateC: this.state,
+    //     render(moveable) {
+    //         const { renderPoses } = moveable.state;
+    //         // const deleteField = this.deleteField;
+    //         console.log(this.SIGNATURE_TYPE);
+    //         const deleteField = (type, id) => {
+    //             console.log("GO DELETE");
+    //             const { fields } = this.stateC;
+    //             // const fieldsCopy = Array.from(fields);
+    //             // let indexToDelete = null;
+    //             // fieldsCopy.forEach((field, index) => {
+    //             //     if (field.id === id && field.type === type);
+    //             //     indexToDelete = index;
+    //             // })
+    //             // console.log("idxToDelete", indexToDelete);
+    //             // if (indexToDelete) {
+    //             //     fieldsCopy.splice(indexToDelete,1);
+    //             //     this.setState({fields: fieldsCopy});
+    //             // }
+    //         }
+    //         return (
+    //             <button
+    //                 onClick={(e) => {
+    //                     console.log("e", e.nativeEvent);
+    //                     console.log("moveable", moveable.state)
+    //                     const domId = moveable.state.target.id;
+    //                     const [notUsed,type,id] = domId.split('-');
+    //                     e.nativeEvent.stopImmediatePropagation();
+    //                     deleteField(type, id);
+    //                 }}
+    //                 style={{
+    //                     position: "absolute",
+    //                     transform: `translate(-50%, -50%) translate(${renderPoses[1][0]}px, ${renderPoses[1][1]}px) translateZ(-50px)`,
+    //                     zIndex: 100,
+    //                 }}
+    //             >
+    //                 X
+    //             </button>
+    //         );
+    //     }
+    // }
+
     test = () => {
         const { webViewer} = this.state;
         const { docViewer } = webViewer;
         const containerToScrollElt = docViewer.getScrollViewElement();
-        // console.log("toto");
+        console.log(this.state.signatureCounter);
         console.log(this.state.fields);
         // console.log("isScrolling test", this.state.isScrolling);
         // const position = containerToScrollElt.getBoundingClientRect();
@@ -337,17 +436,21 @@ class ClassComponent extends React.Component {
                         // console.log(`DOM.target-${targetObj.type}-${targetObj.id}`, document.querySelector(`.target-${targetObj.type}-${targetObj.id}`))
                         //     console.log(targetObj.domElt)
                         //     console.log("QuerySelectpr",document.querySelector(`.${targetObj.domElt}`));
-                        const targetElt = document.querySelector(`.${targetObj.domElt}`);
+                        const targetElt = document.querySelector(`#${targetObj.domElt}`);
                         return (
                             <>
                                 <Moveable
                                     target={targetElt}
+                                    toto={"momo"}
                                     container={null}
                                     origin={false}
                                     edge={false}
                                     draggable={true}
                                     throttleDrag={0}
+                                    ables={[this.getCustomAble()]}
+                                    tooltool={true}
                                     // onClick={(e) => e.inputEvent.stopImmediatePropagation()}
+                                    onClick={() => console.log("ON CLICK FROM MOVEABLE")}
                                     onDragStart={({ target, clientX, clientY }) => {
                                         console.log("onDragStart", target);
                                         console.log("clientX", clientX);
@@ -381,6 +484,7 @@ class ClassComponent extends React.Component {
                                         // target.style.zIndex = 'auto';
                                         // console.log("onDragEnd", target, isDrag);
                                     }}
+                                    // resizable={true}
                                 />
                             </>
                         )

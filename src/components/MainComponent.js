@@ -4,7 +4,7 @@ import regeneratorRuntime from "regenerator-runtime";
 import WebViewer from "@pdftron/webviewer";
 import Moveable from "react-moveable";
 import DraggableField from "./DraggableField";
-import useInterval from "../useInterval";
+
 
 const MainComponent = () => {
 
