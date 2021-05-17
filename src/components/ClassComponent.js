@@ -7,6 +7,7 @@ import Draggable from "react-draggable";
 class ClassComponent extends React.Component {
 
     scrollTimer = null;
+    previousYPosition = 0;
 
     SIGNATURE_TYPE = 'signature';
     EMAIL_TYPE = 'email';
@@ -135,7 +136,7 @@ class ClassComponent extends React.Component {
     }
 
 
-    createMoveable = (field) => {
+    createField = (field) => {
         const { fields } = this.state;
 
         const fieldsCopy = JSON.parse(JSON.stringify(fields));
@@ -187,16 +188,11 @@ class ClassComponent extends React.Component {
         const containerToScrollElt = docViewer.getScrollViewElement();
         const bottomDetectionZone = window.innerHeight - this.DETECTION_ZONE_LIMIT;
         const topDetectionZone =  (window.innerHeight - containerToScrollElt.clientHeight) + this.DETECTION_ZONE_LIMIT;
-        // console.log(field);
-        // console.log(bottomDetectionZone)
-        // Updating new position
-        let previousYPosition = 0;
 
         fields.forEach((fieldCopy => {
             if (fieldCopy.id === field.id && fieldCopy.type === field.type) {
                 fieldCopy.yPosition = yPosition;
                 fieldCopy.xPosition = xPosition;
-                // previousYPosition = Number(fieldCopy.yPosition);
             }
         }))
 
@@ -219,6 +215,8 @@ class ClassComponent extends React.Component {
             if (this.state.isScrolling)
                 this.setState({isScrolling: false});
         }
+
+        this.previousYPosition = yPosition;
     }
 
     scroll = (scrollValue, containerToScroll) => {
@@ -391,12 +389,18 @@ class ClassComponent extends React.Component {
                     {fields.map(field => {
                         if (field.type === this.SIGNATURE_TYPE)
                             return (
-                                <Draggable onStart={() => this.setState({isDragging: true})}
+                                <Draggable onStart={() => {
+                                    this.setState({isDragging: true})
+                                }}
                                            onStop={() => {
-                                               this.setState({isDragging: false, isScrolling: false})
+                                               this.setState({isDragging: false, isScrolling: false});
                                                clearInterval(this.scrollTimer);
                                            }}
-                                           onDrag={(e,data) => /*console.log(data.node.getBoundingClientRect())*/this.onDragHandler(data.node.getBoundingClientRect().x, data.node.getBoundingClientRect().y, field)}
+                                           onDrag={(e,data) => {
+                                               const {x, y} = data.node.getBoundingClientRect();
+                                               this.onDragHandler(x, y, field);
+                                               if (!field.isActive) this.createField(field)
+                                           }}
                                            offsetParent={document.querySelector('.sidebar')}
                                 >
                                     <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
@@ -422,7 +426,12 @@ class ClassComponent extends React.Component {
                                                this.setState({isDragging: false, isScrolling: false})
                                                clearInterval(this.scrollTimer);
                                            }}
-                                           onDrag={(e,data) => console.log(data)}
+                                           onDrag={(e,data) => {
+                                               // console.log(data.node.getBoundingClientRect())
+                                               const {x, y} = data.node.getBoundingClientRect();
+                                               this.onDragHandler(x, y, field);
+                                               if (!field.isActive) this.createField(field)
+                                           }}
                                 >
                                     <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
                                         {field.type.toUpperCase()}
@@ -441,7 +450,11 @@ class ClassComponent extends React.Component {
                                                this.setState({isDragging: false, isScrolling: false})
                                                clearInterval(this.scrollTimer);
                                            }}
-                                            onDrag={(e,data) => console.log(data)}
+                                           onDrag={(e,data) => {
+                                               const {x, y} = data.node.getBoundingClientRect();
+                                               this.onDragHandler(x, y, field);
+                                               if (!field.isActive) this.createField(field)
+                                           }}
 
                                 >
                                     <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
