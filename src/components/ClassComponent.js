@@ -187,7 +187,8 @@ class ClassComponent extends React.Component {
         const containerToScrollElt = docViewer.getScrollViewElement();
         const bottomDetectionZone = window.innerHeight - this.DETECTION_ZONE_LIMIT;
         const topDetectionZone =  (window.innerHeight - containerToScrollElt.clientHeight) + this.DETECTION_ZONE_LIMIT;
-
+        // console.log(field);
+        // console.log(bottomDetectionZone)
         // Updating new position
         let previousYPosition = 0;
 
@@ -195,7 +196,7 @@ class ClassComponent extends React.Component {
             if (fieldCopy.id === field.id && fieldCopy.type === field.type) {
                 fieldCopy.yPosition = yPosition;
                 fieldCopy.xPosition = xPosition;
-                previousYPosition = Number(fieldCopy.yPosition);
+                // previousYPosition = Number(fieldCopy.yPosition);
             }
         }))
 
@@ -369,7 +370,7 @@ class ClassComponent extends React.Component {
         const { docViewer } = webViewer;
         const containerToScrollElt = docViewer.getScrollViewElement();
         console.log(this.state.signatureCounter);
-        console.log(this.state.fields);
+        console.log(this.state.isDragging);
         // console.log("isScrolling test", this.state.isScrolling);
         // const position = containerToScrollElt.getBoundingClientRect();
         // const position = document.querySelector('.MyComponent').getBoundingClientRect();
@@ -384,18 +385,30 @@ class ClassComponent extends React.Component {
         return (<>
             <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
                 SIDEBAR
+                <Draggable><div>ssss</div></Draggable>
                 <button onClick={() => this.test()}>ZZ</button>
                 <div className="sidebar-signature">
                     {fields.map(field => {
                         if (field.type === this.SIGNATURE_TYPE)
                             return (
-                                <Draggable>
-                                    <DraggableField
-                                        type={field.type}
-                                        id={field.id}
-                                        getStyle={this.getStyle}
-                                        deleteField={this.deleteField}
-                                    />
+                                <Draggable onStart={() => this.setState({isDragging: true})}
+                                           onStop={() => {
+                                               this.setState({isDragging: false, isScrolling: false})
+                                               clearInterval(this.scrollTimer);
+                                           }}
+                                           onDrag={(e,data) => /*console.log(data.node.getBoundingClientRect())*/this.onDragHandler(data.node.getBoundingClientRect().x, data.node.getBoundingClientRect().y, field)}
+                                           offsetParent={document.querySelector('.sidebar')}
+                                >
+                                    <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
+                                        {field.type.toUpperCase()}
+                                        {/*<button onClick={() => console.log('toto')}>TT</button>*/}
+                                    </div>
+                                    {/*<DraggableField*/}
+                                    {/*    type={field.type}*/}
+                                    {/*    id={field.id}*/}
+                                    {/*    getStyle={this.getStyle}*/}
+                                    {/*    deleteField={this.deleteField}*/}
+                                    {/*/>*/}
                                 </Draggable>
                             )
                     })}
@@ -404,13 +417,17 @@ class ClassComponent extends React.Component {
                     {fields.map(field => {
                         if (field.type === this.NAME_TYPE)
                             return (
-                                <Draggable>
-                                    <DraggableField
-                                        type={field.type}
-                                        id={field.id}
-                                        getStyle={this.getStyle}
-                                        deleteField={this.deleteField}
-                                    />
+                                <Draggable onStart={() => this.setState({isDragging: true})}
+                                           onStop={() => {
+                                               this.setState({isDragging: false, isScrolling: false})
+                                               clearInterval(this.scrollTimer);
+                                           }}
+                                           onDrag={(e,data) => console.log(data)}
+                                >
+                                    <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
+                                        {field.type.toUpperCase()}
+                                        {/*<button onClick={() => console.log('toto')}>TT</button>*/}
+                                    </div>
                                 </Draggable>
                             )
                     })}
@@ -419,13 +436,18 @@ class ClassComponent extends React.Component {
                     {fields.map(field => {
                         if (field.type === this.EMAIL_TYPE)
                             return (
-                                <Draggable>
-                                    <DraggableField
-                                        type={field.type}
-                                        id={field.id}
-                                        getStyle={this.getStyle}
-                                        deleteField={this.deleteField}
-                                    />
+                                <Draggable onStart={() => this.setState({isDragging: true})}
+                                           onStop={() => {
+                                               this.setState({isDragging: false, isScrolling: false})
+                                               clearInterval(this.scrollTimer);
+                                           }}
+                                            onDrag={(e,data) => console.log(data)}
+
+                                >
+                                    <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
+                                        {field.type.toUpperCase()}
+                                        {/*<button onClick={() => console.log('toto')}>TT</button>*/}
+                                    </div>
                                 </Draggable>
                             )
                     })}
@@ -434,7 +456,7 @@ class ClassComponent extends React.Component {
             <div id="pdf-wrapper" className="MyComponent" style={{width: '75%', height: '100%'}}>
                 {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
                 {isDragging &&
-                <div style={this.getCoverStyle()}/>
+                <div id="cover" style={this.getCoverStyle()}/>
                 }
                 <div className="webviewer" ref={this.viewer} style={{height: "100vh"}}></div>
             </div>
