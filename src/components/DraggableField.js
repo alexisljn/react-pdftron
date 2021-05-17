@@ -6,6 +6,7 @@ const DraggableField = ({type, id, getStyle, deleteField}) => {
         // <div className={`target-${type}-${id}`} style={getStyle(type)}>
         <div id={`target-${type}-${id}`} style={getStyle(type)}>
             {type.toUpperCase()}
+            {/*<button onClick={() => console.log('toto')}>TT</button>*/}
         </div>
     )
 }

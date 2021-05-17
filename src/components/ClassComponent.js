@@ -269,10 +269,11 @@ class ClassComponent extends React.Component {
         return {
             name: "tooltool",
             // stateC: this.state,
-            render(moveable) {
+            render: (moveable) => {
                 const { renderPoses } = moveable.state;
                 // const deleteField = this.deleteField;
                 const deleteField = (type, id) => {
+                    console.log("this state", this.state);
                     console.log("GO DELETE", type, id);
                     // console.log(ctrlInstance.state);
                     // ctrlInstance.setState({signatureCounter: 30});
