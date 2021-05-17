@@ -11,10 +11,13 @@ function App() {
     // Listing des champs placés :
 
     return (
+        <>
+            {/*<h1>sqdqdqsdqdqsd</h1>*/}
         <div id="global" style={{display: 'flex', height: '100vh', overflow: 'hidden'}}>
             {/*<MainComponent/>*/}
             <ClassComponent/>
         </div>
+        </>
     )
 }
 

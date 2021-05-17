@@ -27,7 +27,7 @@ class ClassComponent extends React.Component {
             isDragging: false,
             isScrolling: false,
             isLoading: true,
-            frame: {translate: [0,0]}
+            frame: {translate: [0,0]},
         }
         this.viewer = createRef();
     }
@@ -45,7 +45,7 @@ class ClassComponent extends React.Component {
         const defaultFields = this.getDefaultFields();
 
         this.setState({webViewer: instance, fields: defaultFields});
-        this.setState({isLoading: false});
+        // this.setState({isLoading: false});
     }
 
     getDefaultFields = () => {
@@ -55,8 +55,8 @@ class ClassComponent extends React.Component {
                 type: 'signature',
                 isActive: false,
                 isPlaced: false,
-                xPosition: false,
-                yPosition: false,
+                xPosition: 20,
+                yPosition: 50,
                 id: 1,
             },
             {
@@ -64,8 +64,8 @@ class ClassComponent extends React.Component {
                 type: 'name',
                 isActive: false,
                 isPlaced: false,
-                xPosition: false,
-                yPosition: false,
+                xPosition: 20,
+                yPosition: 85,
                 id: 1,
             },
             {
@@ -73,8 +73,8 @@ class ClassComponent extends React.Component {
                 type: 'email',
                 isActive: false,
                 isPlaced: false,
-                xPosition: false,
-                yPosition: false,
+                xPosition: 20,
+                yPosition: 120,
                 id: 1,
             }]
     }
@@ -90,9 +90,13 @@ class ClassComponent extends React.Component {
             zIndex: 5000,
             width: 150,
             height: 30,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            transform: 'translate(50px, 250px)',
             backgroundColor: colorMapping[inputName],
             color: 'white',
-            cursor: 'pointer'
+            cursor: 'grabbing'
         }
     }
 
@@ -137,6 +141,8 @@ class ClassComponent extends React.Component {
 
 
     createField = (field) => {
+        const positionMapping = {signature: {x: 20, y: 50}, name: {x: 20, y: 85}, email: {x: 20, y: 120}}
+
         const { fields } = this.state;
 
         const fieldsCopy = JSON.parse(JSON.stringify(fields));
@@ -156,8 +162,8 @@ class ClassComponent extends React.Component {
             type: field.type,
             isActive: false,
             isPlaced: false,
-            xPosition: false,
-            yPosition: false,
+            xPosition: positionMapping[field.type].x,
+            yPosition: positionMapping[field.type].y,
             id: newCounterValue
         }
 
@@ -172,12 +178,14 @@ class ClassComponent extends React.Component {
         const fieldsCopy = Array.from(fields);
         let indexToDelete = null;
         fieldsCopy.forEach((field, index) => {
-            if (field.id === id && field.type === type);
+           console.log(field.id, id, field.type, type, index);
+            if (field.id === id && field.type === type)
                 indexToDelete = index;
         })
         console.log("idxToDelete", indexToDelete);
-        if (indexToDelete) {
+        if (indexToDelete !== 'null') {
             fieldsCopy.splice(indexToDelete,1);
+            // document.querySelector(`#target-${type}-${id}`).remove();
             this.setState({fields: fieldsCopy});
         }
     }
@@ -367,8 +375,9 @@ class ClassComponent extends React.Component {
         const { webViewer} = this.state;
         const { docViewer } = webViewer;
         const containerToScrollElt = docViewer.getScrollViewElement();
-        console.log(this.state.signatureCounter);
-        console.log(this.state.isDragging);
+        // console.log(this.state.signatureCounter);
+        // console.log(this.state.isDragging);
+        console.log(this.state.fields);
         // console.log("isScrolling test", this.state.isScrolling);
         // const position = containerToScrollElt.getBoundingClientRect();
         // const position = document.querySelector('.MyComponent').getBoundingClientRect();
@@ -377,43 +386,44 @@ class ClassComponent extends React.Component {
 
     }
 
+    onDragStart = () => {
+        // if (!this.state.isDragging)
+            this.setState({isDragging: true});
+    }
+
+    onDragStop = (field) => {
+        const {fields} = this.state
+
+        fields.forEach((fieldCopy => {
+            if (fieldCopy.id === field.id && fieldCopy.type === field.type) {
+                fieldCopy.yPosition = fieldCopy.yPosition;
+                fieldCopy.xPosition = fieldCopy.xPosition;
+            }
+        }))
+        this.setState({isDragging: false, isScrolling: false, fields: fields});
+        clearInterval(this.scrollTimer);
+    }
+
     render() {
         const {fields, isDragging } = this.state;
 
         return (<>
             <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
                 SIDEBAR
-                <Draggable><div>ssss</div></Draggable>
                 <button onClick={() => this.test()}>ZZ</button>
                 <div className="sidebar-signature">
                     {fields.map(field => {
                         if (field.type === this.SIGNATURE_TYPE)
                             return (
-                                <Draggable onStart={() => {
-                                    this.setState({isDragging: true})
-                                }}
-                                           onStop={() => {
-                                               this.setState({isDragging: false, isScrolling: false});
-                                               clearInterval(this.scrollTimer);
-                                           }}
-                                           onDrag={(e,data) => {
-                                               const {x, y} = data.node.getBoundingClientRect();
-                                               this.onDragHandler(x, y, field);
-                                               if (!field.isActive) this.createField(field)
-                                           }}
-                                           offsetParent={document.querySelector('.sidebar')}
-                                >
-                                    <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
-                                        {field.type.toUpperCase()}
-                                        {/*<button onClick={() => console.log('toto')}>TT</button>*/}
-                                    </div>
-                                    {/*<DraggableField*/}
-                                    {/*    type={field.type}*/}
-                                    {/*    id={field.id}*/}
-                                    {/*    getStyle={this.getStyle}*/}
-                                    {/*    deleteField={this.deleteField}*/}
-                                    {/*/>*/}
-                                </Draggable>
+                                <DraggableField
+                                    field={field}
+                                    getStyle={this.getStyle}
+                                    onDragStart={this.onDragStart}
+                                    onDragStop={this.onDragStop}
+                                    onDragHandler={this.onDragHandler}
+                                    createField={this.createField}
+                                    deleteField={this.deleteField}
+                                />
                             )
                     })}
                 </div>
@@ -421,23 +431,15 @@ class ClassComponent extends React.Component {
                     {fields.map(field => {
                         if (field.type === this.NAME_TYPE)
                             return (
-                                <Draggable onStart={() => this.setState({isDragging: true})}
-                                           onStop={() => {
-                                               this.setState({isDragging: false, isScrolling: false})
-                                               clearInterval(this.scrollTimer);
-                                           }}
-                                           onDrag={(e,data) => {
-                                               // console.log(data.node.getBoundingClientRect())
-                                               const {x, y} = data.node.getBoundingClientRect();
-                                               this.onDragHandler(x, y, field);
-                                               if (!field.isActive) this.createField(field)
-                                           }}
-                                >
-                                    <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
-                                        {field.type.toUpperCase()}
-                                        {/*<button onClick={() => console.log('toto')}>TT</button>*/}
-                                    </div>
-                                </Draggable>
+                                <DraggableField
+                                    field={field}
+                                    getStyle={this.getStyle}
+                                    onDragStart={this.onDragStart}
+                                    onDragStop={this.onDragStop}
+                                    onDragHandler={this.onDragHandler}
+                                    createField={this.createField}
+                                    deleteField={this.deleteField}
+                                />
                             )
                     })}
                 </div>
@@ -445,23 +447,15 @@ class ClassComponent extends React.Component {
                     {fields.map(field => {
                         if (field.type === this.EMAIL_TYPE)
                             return (
-                                <Draggable onStart={() => this.setState({isDragging: true})}
-                                           onStop={() => {
-                                               this.setState({isDragging: false, isScrolling: false})
-                                               clearInterval(this.scrollTimer);
-                                           }}
-                                           onDrag={(e,data) => {
-                                               const {x, y} = data.node.getBoundingClientRect();
-                                               this.onDragHandler(x, y, field);
-                                               if (!field.isActive) this.createField(field)
-                                           }}
-
-                                >
-                                    <div id={`target-${field.type}-${field.id}`} style={this.getStyle(field.type)}>
-                                        {field.type.toUpperCase()}
-                                        {/*<button onClick={() => console.log('toto')}>TT</button>*/}
-                                    </div>
-                                </Draggable>
+                                <DraggableField
+                                    field={field}
+                                    getStyle={this.getStyle}
+                                    onDragStart={this.onDragStart}
+                                    onDragStop={this.onDragStop}
+                                    onDragHandler={this.onDragHandler}
+                                    createField={this.createField}
+                                    deleteField={this.deleteField}
+                                />
                             )
                     })}
                 </div>
@@ -473,6 +467,7 @@ class ClassComponent extends React.Component {
                 }
                 <div className="webviewer" ref={this.viewer} style={{height: "100vh"}}></div>
             </div>
+
         </>);
     }
 }
