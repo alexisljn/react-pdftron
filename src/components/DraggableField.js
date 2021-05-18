@@ -1,7 +1,7 @@
 import React from "react";
 import Draggable from "react-draggable";
 
-const DraggableField = ({field, getStyle, createField, deleteField, onDragStart, onDragStop, onDragHandler, disabled}) => {
+const DraggableField = ({field, getStyle, createField, deleteField, onDragStart, onDragStop, onDragHandler}) => {
 
     return (
         <Draggable /*onStart={() => onDragStart()}*/
