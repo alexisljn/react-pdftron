@@ -20,6 +20,7 @@ class ClassComponent extends React.Component {
         super(props);
         this.state = {
             webViewer: null,
+            tool: null,
             fields: [],
             signatureCounter: 1,
             emailCounter: 1,
@@ -185,17 +186,28 @@ class ClassComponent extends React.Component {
         }
     }
 
-    onDragHandler = (xPosition, yPosition, field) => {
+    onDragHandler = (fieldDomElt, field) => {
         const { webViewer, fields, isScrolling } = this.state;
         const { docViewer } = webViewer;
         const containerToScrollElt = docViewer.getScrollViewElement();
+        // console.log(containerToScrollElt.scrollTop); // good
         const bottomDetectionZone = window.innerHeight - this.DETECTION_ZONE_LIMIT;
         const topDetectionZone =  (window.innerHeight - containerToScrollElt.clientHeight) + this.DETECTION_ZONE_LIMIT;
 
+        const {x, y, right, bottom} = fieldDomElt.getBoundingClientRect();
+
+        const absoluteX = x + window.scrollX /*+ containerToScrollElt.scrollLeft;*/
+        const absoluteY = y + window.scrollY /*+ containerToScrollElt.scrollTop;*/
+        const absoluteRight = right + window.scrollX /*+ containerToScrollElt.scrollLeft;*/
+        const absoluteBottom = bottom + window.scrollY /*+ containerToScrollElt.scrollTop;*/
+
+
         fields.forEach((fieldCopy => {
             if (fieldCopy.id === field.id && fieldCopy.type === field.type) {
-                fieldCopy.yPosition = yPosition;
-                fieldCopy.xPosition = xPosition;
+                fieldCopy.yPosition = absoluteY;
+                fieldCopy.xPosition = absoluteX;
+                fieldCopy.right = absoluteRight;
+                fieldCopy.bottom = absoluteBottom;
             }
         }))
 
@@ -219,7 +231,7 @@ class ClassComponent extends React.Component {
                 this.setState({isScrolling: false});
         }
 
-        this.previousYPosition = yPosition;
+        this.previousYPosition = absoluteY;
     }
 
     scroll = (scrollValue, containerToScroll) => {
@@ -267,13 +279,20 @@ class ClassComponent extends React.Component {
         return xPosition >= position.left;
     }
 
-    test = () => {
+    test = (e) => {
         const { webViewer} = this.state;
         const { docViewer } = webViewer;
+
+        const tool = new webViewer.Tools.Tool(docViewer);
+        console.log(tool.getMouseLocation(e))
+
         const containerToScrollElt = docViewer.getScrollViewElement();
+        console.log('page',docViewer.getCurrentPage());
+        console.log("popsitionMouse")
         // console.log(this.state.signatureCounter);
         // console.log(this.state.isDragging);
         console.log(this.state.fields);
+        // console.log(getMouseLocation(e));
         // console.log("isScrolling test", this.state.isScrolling);
         // const position = containerToScrollElt.getBoundingClientRect();
         // const position = document.querySelector('.MyComponent').getBoundingClientRect();
@@ -287,18 +306,43 @@ class ClassComponent extends React.Component {
             this.setState({isDragging: true});
     }
 
-    onDragStop = () => {
+    onDragStop = (e, field) => {
+        const { webViewer} = this.state;
+        const { docViewer } = webViewer;
+        const containerToScrollElt = docViewer.getScrollViewElement();
+        const tool = new webViewer.Tools.Tool(docViewer);
+        const mousePosition = tool.getMouseLocation(e)
+        console.log(mousePosition);
+        const topLeftPoint = {x: field.xPosition + containerToScrollElt.scrollLeft, y:field.yPosition + containerToScrollElt.scrollTop};
+        const bottomRightPoint = {x: field.right + containerToScrollElt.scrollLeft, y:field.bottom + containerToScrollElt.scrollTop};
+        console.log('A', topLeftPoint)
+        const displayMode = docViewer.getDisplayModeManager().getDisplayMode();
+// takes a start and end point but we just want to see where a single point is located
+//         const page = displayMode.getSelectedPages({x: field.xPosition, y:field.yPosition}, {x: field.right, y: field.bottom});
+        const page = displayMode.getSelectedPages(mousePosition, mousePosition);
+        console.log('from Mouse',page);
+        console.log('With Rect Points', displayMode.getSelectedPages(topLeftPoint, bottomRightPoint));
+        const clickedPage = (page.first !== null) ? page.first : docViewer.getCurrentPage();
+        // const clickedPage = page.first;
+        console.log(clickedPage) // Pas Fiable a 100%
+        //
+        // console.log(displayMode.windowToPage(mousePosition, clickedPage))
+
+
         this.setState({isDragging: false, isScrolling: false});
         clearInterval(this.scrollTimer);
+
     }
 
     render() {
         const {fields, isDragging } = this.state;
 
         return (<>
-            <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
-                SIDEBAR
-                <button onClick={() => this.test()}>ZZ</button>
+            {/*<div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>*/}
+            {/*<div className="sidebar" style={{ backgroundColor: "#E8E8E8", zIndex: 1}}>*/}
+
+                {/*SIDEBAR*/}
+                {/*<button onClick={(e) => this.test(e)}>ZZ</button>*/}
                 {/*<div className="sidebar-signature">*/}
                     {fields.map(field => {
                         // if (field.type === this.SIGNATURE_TYPE)
@@ -347,13 +391,14 @@ class ClassComponent extends React.Component {
                 {/*            )*/}
                 {/*    })}*/}
                 {/*</div>*/}
-            </div>
-            <div id="pdf-wrapper" className="MyComponent" style={{width: '75%', height: '100%'}}>
+            {/*</div>*/}
+            {/*<div id="pdf-wrapper" className="MyComponent" style={{width: '75%', height: '100%'}}>*/}
+            <div id="pdf-wrapper" className="MyComponent" style={{height: '100%'}}>
                 {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
                 {isDragging &&
-                <div id="cover" style={this.getCoverStyle()}/>
+                    <div id="cover" style={this.getCoverStyle()}/>
                 }
-                <div className="webviewer" ref={this.viewer} style={{height: "100vh"}}></div>
+                <div className="webviewer" ref={this.viewer} style={{height: "100%"}}></div>
             </div>
 
         </>);

@@ -5,15 +5,19 @@ const DraggableField = ({field, getStyle, createField, deleteField, onDragStart,
 
     return (
         <Draggable /*onStart={() => onDragStart()}*/
-                   onStop={() => {
-                       onDragStop()
+                   onStop={(e, data) => {
+                       onDragStop(e, field);
                    }}
                    onDrag={(e,data) => {
                        onDragStart()
-                       const {x, y} = data.node.getBoundingClientRect();
-                       const absoluteX = x + window.scrollX;
-                       const absoluteY = y + window.scrollY
-                       onDragHandler(absoluteX, absoluteY, field);
+                       // console.log(data.node.getBoundingClientRect());
+                       // const {x, y, right, bottom} = data.node.getBoundingClientRect();
+                       // const absoluteX = x + window.scrollX;
+                       // const absoluteY = y + window.scrollY
+                       // const absoluteRight = right + window.scrollX;
+                       // const absoluteBottom = bottom + window.scrollY;
+                       // const bottom =
+                       onDragHandler(data.node, field);
                        if (!field.isActive) createField(field)
                    }}
                    position={{x: field.xPosition, y: field.yPosition}}
