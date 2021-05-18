@@ -10,11 +10,10 @@ const DraggableField = ({field, getStyle, createField, deleteField, onDragStart,
                    }}
                    onDrag={(e,data) => {
                        onDragStart()
-                       console.log(data.node.getBoundingClientRect())
                        const {x, y} = data.node.getBoundingClientRect();
-                       // console.log("AbsoluteX", x + window.scrollX); // PE LES VRAIS VALEURS
-                       // console.log("AbsoluteY", y + window.scrollY);
-                       onDragHandler(x, y, field);
+                       const absoluteX = x + window.scrollX;
+                       const absoluteY = y + window.scrollY
+                       onDragHandler(absoluteX, absoluteY, field);
                        if (!field.isActive) createField(field)
                    }}
                    position={{x: field.xPosition, y: field.yPosition}}
@@ -22,7 +21,9 @@ const DraggableField = ({field, getStyle, createField, deleteField, onDragStart,
         >
             <div id={`target-${field.type}-${field.id}`} style={getStyle(field.type)}>
                 {field.type.toUpperCase()}
-                <button onClick={() => deleteField(field.type, field.id)}>XS</button>
+                {field.isActive &&
+                    <button onClick={() => deleteField(field.type, field.id)}>X</button>
+                }
             </div>
         </Draggable>
     )
