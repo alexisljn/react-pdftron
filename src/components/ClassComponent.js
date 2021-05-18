@@ -26,8 +26,6 @@ class ClassComponent extends React.Component {
             nameCounter: 1,
             isDragging: false,
             isScrolling: false,
-            isLoading: true,
-            frame: {translate: [0,0]},
         }
         this.viewer = createRef();
     }
@@ -45,7 +43,6 @@ class ClassComponent extends React.Component {
         const defaultFields = this.getDefaultFields();
 
         this.setState({webViewer: instance, fields: defaultFields});
-        // this.setState({isLoading: false});
     }
 
     getDefaultFields = () => {
@@ -116,19 +113,16 @@ class ClassComponent extends React.Component {
         switch (type) {
             case this.SIGNATURE_TYPE:
                 const {signatureCounter} = this.state;
-                console.log('temoin signature');
                 newValue = signatureCounter + 1;
                 this.setState({signatureCounter: newValue})
                 break;
             case this.EMAIL_TYPE:
                 const {emailCounter} = this.state;
-                console.log('temoin email');
                 newValue = emailCounter + 1
                 this.setState({emailCounter: newValue})
                 break;
             case this.NAME_TYPE:
                 const {nameCounter} = this.state;
-                console.log('temoin name');
                 newValue = nameCounter + 1
                 this.setState({nameCounter: newValue})
                 break;
@@ -168,24 +162,26 @@ class ClassComponent extends React.Component {
         }
 
         fieldsCopy.push(newField);
-        console.log('targetCopy APRES AJOUT', fieldsCopy);
+        // console.log('targetCopy APRES AJOUT', fieldsCopy);
         this.setState({fields:fieldsCopy});
-        // this.setState({targets: targetsCopy});
     }
 
+    //TODO Reflechir est-ce que l'on veut réindexer le tableau après une suppression ?
     deleteField = (type, id) => {
         const { fields } = this.state;
+
         const fieldsCopy = Array.from(fields);
+
         let indexToDelete = null;
+
         fieldsCopy.forEach((field, index) => {
-           console.log(field.id, id, field.type, type, index);
             if (field.id === id && field.type === type)
                 indexToDelete = index;
         })
-        console.log("idxToDelete", indexToDelete);
+
         if (indexToDelete !== 'null') {
             fieldsCopy.splice(indexToDelete,1);
-            // document.querySelector(`#target-${type}-${id}`).remove();
+
             this.setState({fields: fieldsCopy});
         }
     }
@@ -272,105 +268,6 @@ class ClassComponent extends React.Component {
         return xPosition >= position.left;
     }
 
-    getCustomAble = () => {
-        const ctrlInstance = this;
-        return {
-            name: "tooltool",
-            // stateC: this.state,
-            render: (moveable) => {
-                const { renderPoses } = moveable.state;
-                // const deleteField = this.deleteField;
-                const deleteField = (type, id) => {
-                    console.log("this state", this.state);
-                    console.log("GO DELETE", type, id);
-                    // console.log(ctrlInstance.state);
-                    // ctrlInstance.setState({signatureCounter: 30});
-
-                    const { fields } = ctrlInstance.state;
-                    const fieldsCopy = Array.from(fields);
-                    let indexToDelete = null;
-                    console.log("fields Original", fields);
-                    fieldsCopy.forEach((field, index) => {
-                        console.log("eachField", field.id, id, field.type, type);
-                        if (field.id === parseInt(id) && field.type === type)
-                            indexToDelete = index;
-                    })
-                    console.log("idxToDelete", indexToDelete);
-                    console.log("fieldToDelete according IDX", fields[indexToDelete]);
-                    if (indexToDelete !== 'null') {
-                        fieldsCopy.splice(indexToDelete,1);
-                        console.log('After Dekete', fieldsCopy)
-                       ctrlInstance.setState({fields: fieldsCopy});
-                    }
-                }
-                return (
-                    <button
-                        onClick={(e) => {
-                            console.log("e", e.nativeEvent);
-                            console.log("moveable", moveable.state)
-                            const domId = moveable.state.target.id;
-                            const [notUsed,type,id] = domId.split('-');
-                            e.nativeEvent.stopImmediatePropagation();
-                            deleteField(type, id);
-                        }}
-                        style={{
-                            position: "absolute",
-                            transform: `translate(-50%, -50%) translate(${renderPoses[1][0]}px, ${renderPoses[1][1]}px) translateZ(-50px)`,
-                            zIndex: 100,
-                        }}
-                    >
-                        X
-                    </button>
-                );
-            }
-        }
-    }
-
-    // customAble = {
-    //
-    //     name: "tooltool",
-    //     stateC: this.state,
-    //     render(moveable) {
-    //         const { renderPoses } = moveable.state;
-    //         // const deleteField = this.deleteField;
-    //         console.log(this.SIGNATURE_TYPE);
-    //         const deleteField = (type, id) => {
-    //             console.log("GO DELETE");
-    //             const { fields } = this.stateC;
-    //             // const fieldsCopy = Array.from(fields);
-    //             // let indexToDelete = null;
-    //             // fieldsCopy.forEach((field, index) => {
-    //             //     if (field.id === id && field.type === type);
-    //             //     indexToDelete = index;
-    //             // })
-    //             // console.log("idxToDelete", indexToDelete);
-    //             // if (indexToDelete) {
-    //             //     fieldsCopy.splice(indexToDelete,1);
-    //             //     this.setState({fields: fieldsCopy});
-    //             // }
-    //         }
-    //         return (
-    //             <button
-    //                 onClick={(e) => {
-    //                     console.log("e", e.nativeEvent);
-    //                     console.log("moveable", moveable.state)
-    //                     const domId = moveable.state.target.id;
-    //                     const [notUsed,type,id] = domId.split('-');
-    //                     e.nativeEvent.stopImmediatePropagation();
-    //                     deleteField(type, id);
-    //                 }}
-    //                 style={{
-    //                     position: "absolute",
-    //                     transform: `translate(-50%, -50%) translate(${renderPoses[1][0]}px, ${renderPoses[1][1]}px) translateZ(-50px)`,
-    //                     zIndex: 100,
-    //                 }}
-    //             >
-    //                 X
-    //             </button>
-    //         );
-    //     }
-    // }
-
     test = () => {
         const { webViewer} = this.state;
         const { docViewer } = webViewer;
@@ -387,20 +284,12 @@ class ClassComponent extends React.Component {
     }
 
     onDragStart = () => {
-        // if (!this.state.isDragging)
+        if (!this.state.isDragging)
             this.setState({isDragging: true});
     }
 
-    onDragStop = (field) => {
-        const {fields} = this.state
-
-        fields.forEach((fieldCopy => {
-            if (fieldCopy.id === field.id && fieldCopy.type === field.type) {
-                fieldCopy.yPosition = fieldCopy.yPosition;
-                fieldCopy.xPosition = fieldCopy.xPosition;
-            }
-        }))
-        this.setState({isDragging: false, isScrolling: false, fields: fields});
+    onDragStop = () => {
+        this.setState({isDragging: false, isScrolling: false});
         clearInterval(this.scrollTimer);
     }
 
@@ -411,54 +300,54 @@ class ClassComponent extends React.Component {
             <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>
                 SIDEBAR
                 <button onClick={() => this.test()}>ZZ</button>
-                <div className="sidebar-signature">
+                {/*<div className="sidebar-signature">*/}
                     {fields.map(field => {
-                        if (field.type === this.SIGNATURE_TYPE)
-                            return (
-                                <DraggableField
-                                    field={field}
-                                    getStyle={this.getStyle}
-                                    onDragStart={this.onDragStart}
-                                    onDragStop={this.onDragStop}
-                                    onDragHandler={this.onDragHandler}
-                                    createField={this.createField}
-                                    deleteField={this.deleteField}
-                                />
-                            )
+                        // if (field.type === this.SIGNATURE_TYPE)
+                        return (
+                            <DraggableField
+                                field={field}
+                                getStyle={this.getStyle}
+                                onDragStart={this.onDragStart}
+                                onDragStop={this.onDragStop}
+                                onDragHandler={this.onDragHandler}
+                                createField={this.createField}
+                                deleteField={this.deleteField}
+                            />
+                        )
                     })}
-                </div>
-                <div className="sidebar-name">
-                    {fields.map(field => {
-                        if (field.type === this.NAME_TYPE)
-                            return (
-                                <DraggableField
-                                    field={field}
-                                    getStyle={this.getStyle}
-                                    onDragStart={this.onDragStart}
-                                    onDragStop={this.onDragStop}
-                                    onDragHandler={this.onDragHandler}
-                                    createField={this.createField}
-                                    deleteField={this.deleteField}
-                                />
-                            )
-                    })}
-                </div>
-                <div className="sidebar-email">
-                    {fields.map(field => {
-                        if (field.type === this.EMAIL_TYPE)
-                            return (
-                                <DraggableField
-                                    field={field}
-                                    getStyle={this.getStyle}
-                                    onDragStart={this.onDragStart}
-                                    onDragStop={this.onDragStop}
-                                    onDragHandler={this.onDragHandler}
-                                    createField={this.createField}
-                                    deleteField={this.deleteField}
-                                />
-                            )
-                    })}
-                </div>
+                {/*</div>*/}
+                {/*<div className="sidebar-name">*/}
+                {/*    {fields.map(field => {*/}
+                {/*        if (field.type === this.NAME_TYPE)*/}
+                {/*            return (*/}
+                {/*                <DraggableField*/}
+                {/*                    field={field}*/}
+                {/*                    getStyle={this.getStyle}*/}
+                {/*                    onDragStart={this.onDragStart}*/}
+                {/*                    onDragStop={this.onDragStop}*/}
+                {/*                    onDragHandler={this.onDragHandler}*/}
+                {/*                    createField={this.createField}*/}
+                {/*                    deleteField={this.deleteField}*/}
+                {/*                />*/}
+                {/*            )*/}
+                {/*    })}*/}
+                {/*</div>*/}
+                {/*<div className="sidebar-email">*/}
+                {/*    {fields.map(field => {*/}
+                {/*        if (field.type === this.EMAIL_TYPE)*/}
+                {/*            return (*/}
+                {/*                <DraggableField*/}
+                {/*                    field={field}*/}
+                {/*                    getStyle={this.getStyle}*/}
+                {/*                    onDragStart={this.onDragStart}*/}
+                {/*                    onDragStop={this.onDragStop}*/}
+                {/*                    onDragHandler={this.onDragHandler}*/}
+                {/*                    createField={this.createField}*/}
+                {/*                    deleteField={this.deleteField}*/}
+                {/*                />*/}
+                {/*            )*/}
+                {/*    })}*/}
+                {/*</div>*/}
             </div>
             <div id="pdf-wrapper" className="MyComponent" style={{width: '75%', height: '100%'}}>
                 {/*<button onClick={() => console.log(webViewer)}>X</button>*/}

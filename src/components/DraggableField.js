@@ -5,8 +5,8 @@ const DraggableField = ({field, getStyle, createField, deleteField, onDragStart,
 
     return (
         <Draggable /*onStart={() => onDragStart()}*/
-                   onStop={(e, data) => {
-                       onDragStop(field)
+                   onStop={() => {
+                       onDragStop()
                    }}
                    onDrag={(e,data) => {
                        onDragStart()
@@ -17,7 +17,6 @@ const DraggableField = ({field, getStyle, createField, deleteField, onDragStart,
                        if (!field.isActive) createField(field)
                    }}
                    position={{x: field.xPosition, y: field.yPosition}}
-                   // disabled={disabled}
         >
             <div id={`target-${field.type}-${field.id}`} style={getStyle(field.type)}>
                 {field.type.toUpperCase()}
