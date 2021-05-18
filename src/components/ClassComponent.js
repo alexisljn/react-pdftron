@@ -133,7 +133,6 @@ class ClassComponent extends React.Component {
         return newValue
     }
 
-
     createField = (field) => {
         const positionMapping = {signature: {x: 20, y: 50}, name: {x: 20, y: 85}, email: {x: 20, y: 120}}
 
