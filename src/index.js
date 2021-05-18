@@ -13,8 +13,8 @@ function App() {
     return (
         <>
             {/*<h1>sqdqdqsdqdqsd</h1>*/}
-        {/*<div id="global" style={{display: 'flex', height: '100vh', overflow: 'hidden'}}>*/}
-        <div id="global" style={{display: 'flex', flexDirection: "column", height: '100vh', overflow: 'hidden'}}>
+        <div id="global" style={{display: 'flex', height: '100vh', overflow: 'hidden'}}>
+        {/*<div id="global" style={{display: 'flex', flexDirection: "column", height: '100vh', overflow: 'hidden'}}>*/}
             {/*<MainComponent/>*/}
             <ClassComponent/>
         </div>

@@ -307,25 +307,50 @@ class ClassComponent extends React.Component {
     }
 
     onDragStop = (e, field) => {
-        const { webViewer} = this.state;
-        const { docViewer } = webViewer;
+        const { webViewer, fields } = this.state;
+        console.log(webViewer);
+        const { docViewer, iframeWindow } = webViewer;
+        const zoom = docViewer.getZoom();
         const containerToScrollElt = docViewer.getScrollViewElement();
-        const tool = new webViewer.Tools.Tool(docViewer);
-        const mousePosition = tool.getMouseLocation(e)
-        console.log(mousePosition);
-        const topLeftPoint = {x: field.xPosition + containerToScrollElt.scrollLeft, y:field.yPosition + containerToScrollElt.scrollTop};
-        const bottomRightPoint = {x: field.right + containerToScrollElt.scrollLeft, y:field.bottom + containerToScrollElt.scrollTop};
-        console.log('A', topLeftPoint)
+        // const tool = new webViewer.Tools.Tool(docViewer);
+        // const mousePosition = tool.getMouseLocation(e)
+        // console.log(mousePosition);
+
+        // 300 = sidebar width
+        const topLeftPoint = {x: field.xPosition + containerToScrollElt.scrollLeft - 300, y:field.yPosition + containerToScrollElt.scrollTop};
+        const bottomRightPoint = {x: field.right + containerToScrollElt.scrollLeft - 300, y:field.bottom + containerToScrollElt.scrollTop};
+
+        // console.log('A', topLeftPoint)
         const displayMode = docViewer.getDisplayModeManager().getDisplayMode();
-// takes a start and end point but we just want to see where a single point is located
-//         const page = displayMode.getSelectedPages({x: field.xPosition, y:field.yPosition}, {x: field.right, y: field.bottom});
-        const page = displayMode.getSelectedPages(mousePosition, mousePosition);
-        console.log('from Mouse',page);
-        console.log('With Rect Points', displayMode.getSelectedPages(topLeftPoint, bottomRightPoint));
-        const clickedPage = (page.first !== null) ? page.first : docViewer.getCurrentPage();
+        // console.log('from Mouse',page);
+        const selectedPages = displayMode.getSelectedPages(topLeftPoint, bottomRightPoint);
+        // console.log('With Rect Points', selectedPages);
+
+        const clickedPage = this.getPage(selectedPages);
+
+        // const clickedPage = (page.first !== null) ? page.first : docViewer.getCurrentPage();
         // const clickedPage = page.first;
-        console.log(clickedPage) // Pas Fiable a 100%
-        //
+        console.log(clickedPage)
+        //TODO Comportement à définir selon les cas
+        if (clickedPage.state !== 'outside' && clickedPage.state !== 'double') {
+            const pageCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page);
+            console.log(pageCoords);
+            console.log("zoom", zoom);
+            const fieldElt = document.querySelector(`#${field.domElt}`);
+            fieldElt.style.left = `${pageCoords.x * zoom}px`;
+            fieldElt.style.top = `${pageCoords.y * zoom}px`;
+            fieldElt.style.transform = 'translate(0px, 0px)';
+            // fieldElt.style.display = 'inline';
+            // fieldElt.classList.add('no-transform');
+            fieldElt.classList.remove('react-draggable');
+            // console.log(fieldElt.classList)
+
+
+            const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
+            console.log("pageContainer", pageContainer);
+            pageContainer.appendChild(fieldElt);
+        }
+
         // console.log(displayMode.windowToPage(mousePosition, clickedPage))
 
 
@@ -334,15 +359,30 @@ class ClassComponent extends React.Component {
 
     }
 
+    getPage = (selectedPages) => {
+
+        if (selectedPages.first === null && selectedPages.last === null)
+            return {state: 'outside', page: null};
+        if (selectedPages.first === null && typeof selectedPages.last === 'number')
+            // console.log("mi dehors, mi page");
+            return {state: 'partial', page: selectedPages.last};
+        if ((typeof selectedPages.first === 'number' && typeof selectedPages.last === 'number') &&  selectedPages.first === selectedPages.last)
+            // console.log("sur la page", selectedPages.first);
+            return {state: 'full', page: selectedPages.first};
+        if ((typeof selectedPages.first === 'number' && typeof selectedPages.last === 'number') &&  selectedPages.first !== selectedPages.last)
+            // console.log("sur les pages", selectedPages.first, selectedPages.last);
+            return {state: 'double', page: [selectedPages.first, selectedPages.last]};
+
+    }
+
     render() {
         const {fields, isDragging } = this.state;
 
         return (<>
-            {/*<div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "25%", zIndex: 1}}>*/}
+            <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "300px", zIndex: 1}}>
             {/*<div className="sidebar" style={{ backgroundColor: "#E8E8E8", zIndex: 1}}>*/}
 
                 {/*SIDEBAR*/}
-                {/*<button onClick={(e) => this.test(e)}>ZZ</button>*/}
                 {/*<div className="sidebar-signature">*/}
                     {fields.map(field => {
                         // if (field.type === this.SIGNATURE_TYPE)
@@ -358,6 +398,7 @@ class ClassComponent extends React.Component {
                             />
                         )
                     })}
+                <button onClick={(e) => this.test(e)}>ZZ</button>
                 {/*</div>*/}
                 {/*<div className="sidebar-name">*/}
                 {/*    {fields.map(field => {*/}
@@ -391,9 +432,9 @@ class ClassComponent extends React.Component {
                 {/*            )*/}
                 {/*    })}*/}
                 {/*</div>*/}
-            {/*</div>*/}
-            {/*<div id="pdf-wrapper" className="MyComponent" style={{width: '75%', height: '100%'}}>*/}
-            <div id="pdf-wrapper" className="MyComponent" style={{height: '100%'}}>
+            </div>
+            <div id="pdf-wrapper" className="MyComponent" style={{height: '100%', flex: 1}}>
+            {/*<div id="pdf-wrapper" className="MyComponent" style={{height: '100%'}}>*/}
                 {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
                 {isDragging &&
                     <div id="cover" style={this.getCoverStyle()}/>
