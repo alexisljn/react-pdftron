@@ -41,23 +41,6 @@ class ClassComponent extends React.Component {
             this.viewer.current,
         )
         const defaultFields = this.getDefaultFields();
-        const { Annotations, annotManager, docViewer } = instance;
-
-        docViewer.on('documentLoaded', () => {
-            const freeText = new Annotations.FreeTextAnnotation();
-            freeText.PageNumber = 1;
-            freeText.X = 150;
-            freeText.Y = 200;
-            freeText.Width = 150;
-            freeText.Height = 50;
-            freeText.setPadding(new Annotations.Rect(0, 0, 0, 0));
-            freeText.setContents('My Text');
-            // freeText.FillColor = new Annotations.Color(0, 255, 255);
-            freeText.FontSize = '16pt';
-
-            annotManager.addAnnotation(freeText, { autoFocus: false });
-            annotManager.redrawAnnotation(freeText);
-        })
 
 
         this.setState({webViewer: instance, fields: defaultFields});
@@ -299,7 +282,7 @@ class ClassComponent extends React.Component {
     test = (e) => {
         const { webViewer} = this.state;
         const { docViewer } = webViewer;
-
+        const annotManager = docViewer.getAnnotationManager();
         const tool = new webViewer.Tools.Tool(docViewer);
         console.log(tool.getMouseLocation(e))
 
@@ -309,6 +292,7 @@ class ClassComponent extends React.Component {
         // console.log(this.state.signatureCounter);
         // console.log(this.state.isDragging);
         console.log(this.state.fields);
+        console.log("les annots",annotManager.getAnnotationsList())
         // console.log(getMouseLocation(e));
         // console.log("isScrolling test", this.state.isScrolling);
         // const position = containerToScrollElt.getBoundingClientRect();
@@ -349,26 +333,33 @@ class ClassComponent extends React.Component {
         // const clickedPage = page.first;
         console.log(clickedPage)
         //TODO Comportement à définir selon les cas
-        if (clickedPage.state !== 'outside' && clickedPage.state !== 'double') {
+        if (clickedPage.state === 'full') {
             const pageCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page);
             console.log(pageCoords);
             console.log("zoom", zoom);
             const fieldElt = document.querySelector(`#${field.domElt}`);
-            fieldElt.style.left = `${pageCoords.x * zoom}px`;
-            fieldElt.style.top = `${pageCoords.y * zoom}px`;
-            fieldElt.style.transform = 'translate(0px, 0px)';
+            // fieldElt.style.left = `${pageCoords.x * zoom}px`;
+            // fieldElt.style.top = `${pageCoords.y * zoom}px`;
+            // fieldElt.style.transform = 'translate(0px, 0px)';
             // fieldElt.style.display = 'inline';
             // fieldElt.classList.add('no-transform');
-            fieldElt.classList.remove('react-draggable');
             // console.log(fieldElt.classList)
-            this.addFormFieldAnnot(field.type, 'NAME !!!', 'TOTO', true)
+            this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, pageCoords.x, pageCoords.y, clickedPage.page, zoom);
 
-            const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
-            console.log("pageContainer", pageContainer);
-            pageContainer.appendChild(fieldElt);
+
+            // const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
+            // console.log("pageContainer", pageContainer);
+            // pageContainer.appendChild(fieldElt);
+        } else if (clickedPage.state === 'partial') {
+        // Si le state est partial il faut catcher où on est ?
+        const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
+        console.log("pg scrollHeight", pageContainer.scrollHeight);
+        console.log("pg scrollTop", pageContainer.scrollTop);
+        console.log("pg cvlientHeight", pageContainer.clientHeight);
+        console.log("pg offsetHeight", pageContainer.offsetHeight);
         }
-
         // console.log(displayMode.windowToPage(mousePosition, clickedPage))
+        this.deleteField(field.type, field.id);
 
 
         this.setState({isDragging: false, isScrolling: false});
@@ -377,28 +368,26 @@ class ClassComponent extends React.Component {
     }
 
 
-    addFormFieldAnnot = (type, name, value, flag) => {
+    addFormFieldAnnotation = (type, name, value, flag, x, y, pageNumber, zoom) => {
 
         const {webViewer} = this.state;
         const {docViewer, Annotations} = webViewer;
-        const doc = docViewer.getDocument();
+        // const doc = docViewer.getDocument();
         const annotManager = docViewer.getAnnotationManager();
-        console.log("Annot", Annotations);
-        console.log(doc);
 
         const textAnnot = new Annotations.FreeTextAnnotation();
-        const page_number = docViewer.getCurrentPage();
-        console.log("pn", page_number);
+        // const page_number = docViewer.getCurrentPage();
+        // console.log("pn", page_number);
+        //
+        // const page_info = doc.getPageInfo(page_number);
+        // console.log("pi", page_info);
 
-        const page_info = doc.getPageInfo(page_number);
-        console.log("pi", page_info);
-
-        textAnnot.PageNumber = page_number;
+        textAnnot.PageNumber = pageNumber;
         textAnnot.custom = { type, value, flag };
-        textAnnot.Width = 200;
-        textAnnot.Height = 80;
-        textAnnot.X = 250
-        textAnnot.Y = 400;
+        textAnnot.Width = 150;
+        textAnnot.Height = 30;
+        textAnnot.X = x
+        textAnnot.Y = y;
         textAnnot.setContents(name + '_' + type);
         textAnnot.setPadding(new Annotations.Rect(0, 0, 0, 0));
         textAnnot.FillColor = new Annotations.Color(0, 255, 255);

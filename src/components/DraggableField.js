@@ -24,9 +24,9 @@ const DraggableField = ({field, getStyle, createField, deleteField, onDragStart,
         >
             <div id={`target-${field.type}-${field.id}`} style={getStyle(field.type)}>
                 {field.type.toUpperCase()}
-                {field.isActive &&
-                    <button onClick={() => deleteField(field.type, field.id)}>X</button>
-                }
+                {/*{field.isActive &&*/}
+                {/*    <button onClick={() => deleteField(field.type, field.id)}>X</button>*/}
+                {/*}*/}
             </div>
         </Draggable>
     )
