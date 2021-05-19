@@ -344,7 +344,7 @@ class ClassComponent extends React.Component {
             // fieldElt.classList.add('no-transform');
             fieldElt.classList.remove('react-draggable');
             // console.log(fieldElt.classList)
-
+            this.addFormFieldAnnot(field.type, 'NAME !!!', 'TOTO', true)
 
             const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
             console.log("pageContainer", pageContainer);
@@ -358,6 +358,30 @@ class ClassComponent extends React.Component {
         clearInterval(this.scrollTimer);
 
     }
+
+
+    addFormFieldAnnot = (type, name, value, flag) => {
+
+        const {webViewer} = this.state;
+        const {docViewer, Annotations} = webViewer;
+        const doc = docViewer.getDocument();
+        const annotManager = docViewer.getAnnotationManager();
+
+
+        const textAnnot = new Annotations.FreeTextAnnotation();
+        const page_number = docViewer.getCurrentPage();
+        const page_info = doc.getPageInfo(page_number);
+        textAnnot.PageNumber = page_number;
+        textAnnot.custom = { type, value, flag };
+        textAnnot.setContents(name + '_' + type);
+        textAnnot.Width = 200;
+        textAnnot.Height = 80;
+        textAnnot.X = page_info.width/2 - textAnnot.Width/2;
+        textAnnot.Y = page_info.height/2 - textAnnot.Height/2;
+        console.log("textAnnot", textAnnot);
+        annotManager.addAnnotation(textAnnot);
+        annotManager.redrawAnnotation(textAnnot);
+    };
 
     getPage = (selectedPages) => {
 
