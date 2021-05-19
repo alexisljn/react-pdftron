@@ -40,8 +40,25 @@ class ClassComponent extends React.Component {
             },
             this.viewer.current,
         )
-        instance.Tools.Tool.ENABLE_TEXT_SELECTION = false;
         const defaultFields = this.getDefaultFields();
+        const { Annotations, annotManager, docViewer } = instance;
+
+        docViewer.on('documentLoaded', () => {
+            const freeText = new Annotations.FreeTextAnnotation();
+            freeText.PageNumber = 1;
+            freeText.X = 150;
+            freeText.Y = 200;
+            freeText.Width = 150;
+            freeText.Height = 50;
+            freeText.setPadding(new Annotations.Rect(0, 0, 0, 0));
+            freeText.setContents('My Text');
+            // freeText.FillColor = new Annotations.Color(0, 255, 255);
+            freeText.FontSize = '16pt';
+
+            annotManager.addAnnotation(freeText, { autoFocus: false });
+            annotManager.redrawAnnotation(freeText);
+        })
+
 
         this.setState({webViewer: instance, fields: defaultFields});
     }
@@ -366,20 +383,27 @@ class ClassComponent extends React.Component {
         const {docViewer, Annotations} = webViewer;
         const doc = docViewer.getDocument();
         const annotManager = docViewer.getAnnotationManager();
-
+        console.log("Annot", Annotations);
+        console.log(doc);
 
         const textAnnot = new Annotations.FreeTextAnnotation();
         const page_number = docViewer.getCurrentPage();
+        console.log("pn", page_number);
+
         const page_info = doc.getPageInfo(page_number);
+        console.log("pi", page_info);
+
         textAnnot.PageNumber = page_number;
         textAnnot.custom = { type, value, flag };
-        textAnnot.setContents(name + '_' + type);
         textAnnot.Width = 200;
         textAnnot.Height = 80;
-        textAnnot.X = page_info.width/2 - textAnnot.Width/2;
-        textAnnot.Y = page_info.height/2 - textAnnot.Height/2;
+        textAnnot.X = 250
+        textAnnot.Y = 400;
+        textAnnot.setContents(name + '_' + type);
+        textAnnot.setPadding(new Annotations.Rect(0, 0, 0, 0));
+        textAnnot.FillColor = new Annotations.Color(0, 255, 255);
         console.log("textAnnot", textAnnot);
-        annotManager.addAnnotation(textAnnot);
+        annotManager.addAnnotation(textAnnot, { autoFocus: false });
         annotManager.redrawAnnotation(textAnnot);
     };
 
