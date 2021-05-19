@@ -40,7 +40,7 @@ class ClassComponent extends React.Component {
             },
             this.viewer.current,
         )
-
+        instance.Tools.Tool.ENABLE_TEXT_SELECTION = false;
         const defaultFields = this.getDefaultFields();
 
         this.setState({webViewer: instance, fields: defaultFields});
