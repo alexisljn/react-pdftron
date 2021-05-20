@@ -15,6 +15,8 @@ class ClassComponent extends React.Component {
     DETECTION_ZONE_LIMIT = 50;
     SET_INTERVAL_DELAY = 50;
     SCROLL_VALUE = 20;
+    LABEL_FIELD_HEIGHT = 30;
+    LABEL_FIELD_WIDTH = 150;
 
     constructor(props) {
         super(props);
@@ -337,26 +339,69 @@ class ClassComponent extends React.Component {
             const pageCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page);
             console.log(pageCoords);
             console.log("zoom", zoom);
-            const fieldElt = document.querySelector(`#${field.domElt}`);
-            // fieldElt.style.left = `${pageCoords.x * zoom}px`;
-            // fieldElt.style.top = `${pageCoords.y * zoom}px`;
-            // fieldElt.style.transform = 'translate(0px, 0px)';
-            // fieldElt.style.display = 'inline';
-            // fieldElt.classList.add('no-transform');
-            // console.log(fieldElt.classList)
             this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, pageCoords.x, pageCoords.y, clickedPage.page, zoom);
 
-
-            // const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
-            // console.log("pageContainer", pageContainer);
-            // pageContainer.appendChild(fieldElt);
         } else if (clickedPage.state === 'partial') {
-        // Si le state est partial il faut catcher où on est ?
-        const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
-        console.log("pg scrollHeight", pageContainer.scrollHeight);
-        console.log("pg scrollTop", pageContainer.scrollTop);
-        console.log("pg cvlientHeight", pageContainer.clientHeight);
-        console.log("pg offsetHeight", pageContainer.offsetHeight);
+
+            const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
+            const topLeftPointCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page);
+            const bottomRightPointCoords = displayMode.windowToPage(bottomRightPoint, clickedPage.page);
+
+            // console.log("X pageCoordsA coeff zoom", topLeftPointCoords.x * zoom); // Good
+            // console.log("Y pageCoordsA coeff zoom", topLeftPointCoords.y * zoom); // Good
+            // console.log("X pageCoordsB coeff zoom", bottomRightPointCoords.x * zoom); // Good
+            // console.log("Y pageCoordsB coeff zoom", bottomRightPointCoords.y * zoom); // Good
+
+            // let x = topLeftPointCoords.x;
+            // let y = topLeftPointCoords.y;
+
+            const x = this.getAnnotationXPosition(topLeftPointCoords.x, bottomRightPointCoords.x, pageContainer, zoom);
+            const y = this.getAnnotationYPosition(topLeftPointCoords.y, bottomRightPointCoords.y, pageContainer, zoom);
+
+            // if (topLeftPointCoords.x * zoom < 0)
+            //     x = 0;
+            // else if (bottomRightPointCoords.x * zoom > pageContainer.offsetWidth)
+            //     x = (pageContainer.offsetWidth - (this.LABEL_FIELD_WIDTH * zoom)) / zoom;
+
+            // if (topLeftPointCoords.y * zoom < 0)
+            //     y = 0;
+            // else if (bottomRightPointCoords.y * zoom > pageContainer.offsetHeight)
+            //     y = (pageContainer.offsetHeight - (this.LABEL_FIELD_HEIGHT * zoom)) / zoom;
+
+            console.log('finalX', x);
+            console.log("finalY", y);
+
+            this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, x, y, clickedPage.page, zoom);
+            console.log("pg offsetHeight", pageContainer.offsetHeight);
+            console.log("pg offsetWidth", pageContainer.offsetWidth);
+        } else if (clickedPage.state === 'double') {
+            const firstPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[0]}`);
+            const secondPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[1]}`);
+
+            const topLeftPointCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page[0]);
+            const bottomRightPointCoords = displayMode.windowToPage(bottomRightPoint, clickedPage.page[1]);
+
+            const fieldPxAmountInFirstPage = firstPageContainer.offsetHeight - (topLeftPointCoords.y * zoom);
+            const fieldPxAmountInSecondPage = bottomRightPointCoords.y * zoom;
+
+            // Si les valeurs sont égales, en page 1 arbitrairement
+            let y = 0
+            let page = clickedPage.page[1]
+
+            if (fieldPxAmountInFirstPage >= fieldPxAmountInSecondPage) {
+                y = (firstPageContainer.offsetHeight - (this.LABEL_FIELD_HEIGHT * zoom)) / zoom;
+                page = clickedPage.page[0];
+                console.log("CALCULATED Y", y);
+            }
+
+            this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, topLeftPointCoords.x, y, page, zoom);
+
+            console.log('TOP LEFT Y',topLeftPointCoords.y * zoom);
+            console.log("firstPage offsetHeight", firstPageContainer.offsetHeight);
+            console.log("TOP LEFT PX en page 1", firstPageContainer.offsetHeight - topLeftPointCoords.y * zoom) // Good
+            console.log('BOTTOM RIGHT Y',bottomRightPointCoords.y * zoom); //Correspond immédiatement au nombre de px présents sur la page 2
+            console.log("secondPage offsetHeight", secondPageContainer.offsetHeight);
+            // console.log-
         }
         // console.log(displayMode.windowToPage(mousePosition, clickedPage))
         this.deleteField(field.type, field.id);
@@ -365,6 +410,24 @@ class ClassComponent extends React.Component {
         this.setState({isDragging: false, isScrolling: false});
         clearInterval(this.scrollTimer);
 
+    }
+
+    getAnnotationXPosition = (topLeftX, bottomRightX, pageContainer, zoom) => {
+        if (topLeftX * zoom < 0)
+            return 0;
+        else if (bottomRightX * zoom > pageContainer.offsetWidth)
+            return (pageContainer.offsetWidth - (this.LABEL_FIELD_WIDTH * zoom)) / zoom;
+        else
+            return topLeftX;
+    }
+
+    getAnnotationYPosition = (topLeftY, bottomRightY, pageContainer, zoom) => {
+        if (topLeftY * zoom < 0)
+            return 0;
+        else if (bottomRightY * zoom > pageContainer.offsetHeight)
+            return (pageContainer.offsetHeight - (this.LABEL_FIELD_HEIGHT * zoom)) / zoom;
+        else
+            return topLeftY;
     }
 
 
@@ -384,8 +447,8 @@ class ClassComponent extends React.Component {
 
         textAnnot.PageNumber = pageNumber;
         textAnnot.custom = { type, value, flag };
-        textAnnot.Width = 150;
-        textAnnot.Height = 30;
+        textAnnot.Width = this.LABEL_FIELD_WIDTH;
+        textAnnot.Height = this.LABEL_FIELD_HEIGHT;
         textAnnot.X = x
         textAnnot.Y = y;
         textAnnot.setContents(name + '_' + type);
@@ -397,9 +460,16 @@ class ClassComponent extends React.Component {
     };
 
     getPage = (selectedPages) => {
+        const {webViewer} = this.state;
+        const {docViewer } = webViewer
 
-        if (selectedPages.first === null && selectedPages.last === null)
+        //TODO Dans certains cas pdfTron entre dans ce bloc alors qu'un label est en partie sur une page
+        // EUx meme connaissent ce bug et quand les deux pages sont null, ils appellent getCurrentPage()
+        // Que fait-on ?
+        if (selectedPages.first === null && selectedPages.last === null) {
+            console.log('selon ce fou de docViewer', docViewer.getCurrentPage())
             return {state: 'outside', page: null};
+        }
         if (selectedPages.first === null && typeof selectedPages.last === 'number')
             // console.log("mi dehors, mi page");
             return {state: 'partial', page: selectedPages.last};
