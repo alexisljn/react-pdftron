@@ -315,68 +315,42 @@ class ClassComponent extends React.Component {
         const { docViewer, iframeWindow } = webViewer;
         const zoom = docViewer.getZoom();
         const containerToScrollElt = docViewer.getScrollViewElement();
-        // const tool = new webViewer.Tools.Tool(docViewer);
-        // const mousePosition = tool.getMouseLocation(e)
-        // console.log(mousePosition);
 
         // 300 = sidebar width
         const topLeftPoint = {x: field.xPosition + containerToScrollElt.scrollLeft - 300, y:field.yPosition + containerToScrollElt.scrollTop};
         const bottomRightPoint = {x: field.right + containerToScrollElt.scrollLeft - 300, y:field.bottom + containerToScrollElt.scrollTop};
 
-        // console.log('A', topLeftPoint)
         const displayMode = docViewer.getDisplayModeManager().getDisplayMode();
-        // console.log('from Mouse',page);
         const selectedPages = displayMode.getSelectedPages(topLeftPoint, bottomRightPoint);
-        // console.log('With Rect Points', selectedPages);
 
         const clickedPage = this.getPage(selectedPages);
+
 
         // const clickedPage = (page.first !== null) ? page.first : docViewer.getCurrentPage();
         // const clickedPage = page.first;
         console.log(clickedPage)
-        //TODO Comportement à définir selon les cas
-        if (clickedPage.state === 'full') {
-            const pageCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page);
-            console.log(pageCoords);
-            console.log("zoom", zoom);
-            this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, pageCoords.x, pageCoords.y, clickedPage.page, zoom);
 
-        } else if (clickedPage.state === 'partial') {
+        let x, y, page;
+
+        if (clickedPage.state !== 'double') {
+            // {x, y} = displayMode.windowToPage(topLeftPoint, clickedPage.page);
+            x = displayMode.windowToPage(topLeftPoint, clickedPage.page).x;
+            y = displayMode.windowToPage(topLeftPoint, clickedPage.page).y;
+            page = clickedPage.page;
+        }
+
+        if (clickedPage.state === 'partial') {
 
             const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
             const topLeftPointCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page);
             const bottomRightPointCoords = displayMode.windowToPage(bottomRightPoint, clickedPage.page);
 
-            // console.log("X pageCoordsA coeff zoom", topLeftPointCoords.x * zoom); // Good
-            // console.log("Y pageCoordsA coeff zoom", topLeftPointCoords.y * zoom); // Good
-            // console.log("X pageCoordsB coeff zoom", bottomRightPointCoords.x * zoom); // Good
-            // console.log("Y pageCoordsB coeff zoom", bottomRightPointCoords.y * zoom); // Good
+            x = this.getAnnotationXPosition(topLeftPointCoords.x, bottomRightPointCoords.x, pageContainer, zoom);
+            y = this.getAnnotationYPosition(topLeftPointCoords.y, bottomRightPointCoords.y, pageContainer, zoom);
 
-            // let x = topLeftPointCoords.x;
-            // let y = topLeftPointCoords.y;
-
-            const x = this.getAnnotationXPosition(topLeftPointCoords.x, bottomRightPointCoords.x, pageContainer, zoom);
-            const y = this.getAnnotationYPosition(topLeftPointCoords.y, bottomRightPointCoords.y, pageContainer, zoom);
-
-            // if (topLeftPointCoords.x * zoom < 0)
-            //     x = 0;
-            // else if (bottomRightPointCoords.x * zoom > pageContainer.offsetWidth)
-            //     x = (pageContainer.offsetWidth - (this.LABEL_FIELD_WIDTH * zoom)) / zoom;
-
-            // if (topLeftPointCoords.y * zoom < 0)
-            //     y = 0;
-            // else if (bottomRightPointCoords.y * zoom > pageContainer.offsetHeight)
-            //     y = (pageContainer.offsetHeight - (this.LABEL_FIELD_HEIGHT * zoom)) / zoom;
-
-            console.log('finalX', x);
-            console.log("finalY", y);
-
-            this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, x, y, clickedPage.page, zoom);
-            console.log("pg offsetHeight", pageContainer.offsetHeight);
-            console.log("pg offsetWidth", pageContainer.offsetWidth);
         } else if (clickedPage.state === 'double') {
             const firstPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[0]}`);
-            const secondPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[1]}`);
+            // const secondPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[1]}`);
 
             const topLeftPointCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page[0]);
             const bottomRightPointCoords = displayMode.windowToPage(bottomRightPoint, clickedPage.page[1]);
@@ -385,25 +359,17 @@ class ClassComponent extends React.Component {
             const fieldPxAmountInSecondPage = bottomRightPointCoords.y * zoom;
 
             // Si les valeurs sont égales, en page 1 arbitrairement
-            let y = 0
-            let page = clickedPage.page[1]
+            x = topLeftPointCoords.x
+            y = 0
+            page = clickedPage.page[1]
 
             if (fieldPxAmountInFirstPage >= fieldPxAmountInSecondPage) {
                 y = (firstPageContainer.offsetHeight - (this.LABEL_FIELD_HEIGHT * zoom)) / zoom;
                 page = clickedPage.page[0];
-                console.log("CALCULATED Y", y);
             }
-
-            this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, topLeftPointCoords.x, y, page, zoom);
-
-            console.log('TOP LEFT Y',topLeftPointCoords.y * zoom);
-            console.log("firstPage offsetHeight", firstPageContainer.offsetHeight);
-            console.log("TOP LEFT PX en page 1", firstPageContainer.offsetHeight - topLeftPointCoords.y * zoom) // Good
-            console.log('BOTTOM RIGHT Y',bottomRightPointCoords.y * zoom); //Correspond immédiatement au nombre de px présents sur la page 2
-            console.log("secondPage offsetHeight", secondPageContainer.offsetHeight);
-            // console.log-
         }
-        // console.log(displayMode.windowToPage(mousePosition, clickedPage))
+
+        this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, x, y, page);
         this.deleteField(field.type, field.id);
 
 
@@ -431,32 +397,27 @@ class ClassComponent extends React.Component {
     }
 
 
-    addFormFieldAnnotation = (type, name, value, flag, x, y, pageNumber, zoom) => {
+    addFormFieldAnnotation = (type, name, value, flag, x, y, pageNumber) => {
 
         const {webViewer} = this.state;
         const {docViewer, Annotations} = webViewer;
-        // const doc = docViewer.getDocument();
-        const annotManager = docViewer.getAnnotationManager();
 
-        const textAnnot = new Annotations.FreeTextAnnotation();
-        // const page_number = docViewer.getCurrentPage();
-        // console.log("pn", page_number);
-        //
-        // const page_info = doc.getPageInfo(page_number);
-        // console.log("pi", page_info);
+        const annotationManager = docViewer.getAnnotationManager();
 
-        textAnnot.PageNumber = pageNumber;
-        textAnnot.custom = { type, value, flag };
-        textAnnot.Width = this.LABEL_FIELD_WIDTH;
-        textAnnot.Height = this.LABEL_FIELD_HEIGHT;
-        textAnnot.X = x
-        textAnnot.Y = y;
-        textAnnot.setContents(name + '_' + type);
-        textAnnot.setPadding(new Annotations.Rect(0, 0, 0, 0));
-        textAnnot.FillColor = new Annotations.Color(0, 255, 255);
-        console.log("textAnnot", textAnnot);
-        annotManager.addAnnotation(textAnnot, { autoFocus: false });
-        annotManager.redrawAnnotation(textAnnot);
+        const textAnnotation = new Annotations.FreeTextAnnotation();
+
+        textAnnotation.PageNumber = pageNumber;
+        textAnnotation.custom = { type, value, flag };
+        textAnnotation.Width = this.LABEL_FIELD_WIDTH;
+        textAnnotation.Height = this.LABEL_FIELD_HEIGHT;
+        textAnnotation.X = x
+        textAnnotation.Y = y;
+        textAnnotation.setContents(name + '_' + type);
+        textAnnotation.setPadding(new Annotations.Rect(0, 0, 0, 0));
+        textAnnotation.FillColor = new Annotations.Color(0, 255, 255);
+        console.log("textAnnot", textAnnotation);
+        annotationManager.addAnnotation(textAnnotation, { autoFocus: false });
+        annotationManager.redrawAnnotation(textAnnotation);
     };
 
     getPage = (selectedPages) => {
