@@ -1,7 +1,6 @@
 import React, {createRef} from "react";
 import WebViewer from "@pdftron/webviewer";
 import DraggableField from "./DraggableField";
-import Moveable from "react-moveable";
 import Draggable from "react-draggable";
 
 class ClassComponent extends React.Component {
@@ -29,6 +28,7 @@ class ClassComponent extends React.Component {
             nameCounter: 1,
             isDragging: false,
             isScrolling: false,
+            showOptions: false,
         }
         this.viewer = createRef();
     }
@@ -39,13 +39,47 @@ class ClassComponent extends React.Component {
                 licenseKey: 'toto',
                 path: '/pdftron/lib',
                 initialDoc: '/fixture/sample.pdf',
+                disabledElements: ['header', 'toolsHeader', 'annotationCommentButton', ]
             },
             this.viewer.current,
         )
         const defaultFields = this.getDefaultFields();
 
-
         this.setState({webViewer: instance, fields: defaultFields});
+
+        const {docViewer} = instance
+        const annotationManager = docViewer.getAnnotationManager();
+        instance.annotationPopup.add([{
+            type: 'actionButton',
+            img: '/user.png',
+            // label: 'edit',
+            onClick: () => {
+                this.setState({showOptions: true});
+            }
+        }]);
+
+        // docViewer.on('mouseLeftDown', (e) => {
+        //     console.log("saucisse", e)
+        //     e.stopImmediatePropagation();
+        // })
+
+        annotationManager.on("annotationSelected", (annotations, action) => {
+            console.log('TRIGGERED')
+            console.log(action)
+            console.log(annotations)
+            if (action !== 'selected') {
+                // this.setState({showOptions: true})
+                this.setState({showOptions: false})
+            } else {
+                // this.setState({showOptions: false})
+            }
+        })
+
+        // annotationManager.on('annotationDoubleClicked', (annot) => {
+        //     console.log('DOUBLE CLICKED', annot);
+        //     // e.stopImmediatePropagation();
+        // })
+
     }
 
     getDefaultFields = () => {
@@ -54,7 +88,7 @@ class ClassComponent extends React.Component {
                 domElt: 'target-signature-1',
                 type: 'signature',
                 isActive: false,
-                isPlaced: false,
+                // isPlaced: false,
                 xPosition: 20,
                 yPosition: 50,
                 id: 1,
@@ -63,7 +97,7 @@ class ClassComponent extends React.Component {
                 domElt: 'target-name-1',
                 type: 'name',
                 isActive: false,
-                isPlaced: false,
+                // isPlaced: false,
                 xPosition: 20,
                 yPosition: 85,
                 id: 1,
@@ -72,7 +106,7 @@ class ClassComponent extends React.Component {
                 domElt: 'target-email-1',
                 type: 'email',
                 isActive: false,
-                isPlaced: false,
+                // isPlaced: false,
                 xPosition: 20,
                 yPosition: 120,
                 id: 1,
@@ -81,19 +115,19 @@ class ClassComponent extends React.Component {
 
     getStyle = (inputName) => {
         const colorMapping =  {
-            signature: 'blue',
-            name: 'red',
-            email: 'green'
+            signature: 'rgb(20, 172, 227)',
+            name: 'rgb(235, 45, 102)',
+            email: 'rgb(26, 219, 161)'
         }
 
         return {
-            zIndex: 5000,
-            width: 150,
-            height: 30,
+            // zIndex: 5000,
+            width: this.LABEL_FIELD_WIDTH,
+            height: this.LABEL_FIELD_HEIGHT,
             position: 'absolute',
             top: 0,
             left: 0,
-            transform: 'translate(50px, 250px)',
+            // transform: 'translate(50px, 250px)',
             backgroundColor: colorMapping[inputName],
             color: 'white',
             cursor: 'grabbing'
@@ -157,14 +191,14 @@ class ClassComponent extends React.Component {
             domElt: `target-${field.type}-${newCounterValue}`,
             type: field.type,
             isActive: false,
-            isPlaced: false,
+            // isPlaced: false,
             xPosition: positionMapping[field.type].x,
             yPosition: positionMapping[field.type].y,
             id: newCounterValue
         }
 
         fieldsCopy.push(newField);
-        // console.log('targetCopy APRES AJOUT', fieldsCopy);
+
         this.setState({fields:fieldsCopy});
     }
 
@@ -304,14 +338,14 @@ class ClassComponent extends React.Component {
 
     }
 
-    onDragStart = () => {
-        if (!this.state.isDragging)
-            this.setState({isDragging: true});
+    onDragStart = (field) => {
+        // if (!this.state.isDragging) {}
+        this.setState({isDragging: true});
+        this.createField(field)
     }
 
     onDragStop = (e, field) => {
-        const { webViewer, fields } = this.state;
-        console.log(webViewer);
+        const { webViewer } = this.state;
         const { docViewer, iframeWindow } = webViewer;
         const zoom = docViewer.getZoom();
         const containerToScrollElt = docViewer.getScrollViewElement();
@@ -325,53 +359,57 @@ class ClassComponent extends React.Component {
 
         const clickedPage = this.getPage(selectedPages);
 
-
         // const clickedPage = (page.first !== null) ? page.first : docViewer.getCurrentPage();
-        // const clickedPage = page.first;
         console.log(clickedPage)
 
-        let x, y, page;
 
-        if (clickedPage.state !== 'double') {
-            // {x, y} = displayMode.windowToPage(topLeftPoint, clickedPage.page);
-            x = displayMode.windowToPage(topLeftPoint, clickedPage.page).x;
-            y = displayMode.windowToPage(topLeftPoint, clickedPage.page).y;
-            page = clickedPage.page;
-        }
+        if (clickedPage.state !== 'outside') {
+            let x, y, page;
 
-        if (clickedPage.state === 'partial') {
 
-            const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
-            const topLeftPointCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page);
-            const bottomRightPointCoords = displayMode.windowToPage(bottomRightPoint, clickedPage.page);
-
-            x = this.getAnnotationXPosition(topLeftPointCoords.x, bottomRightPointCoords.x, pageContainer, zoom);
-            y = this.getAnnotationYPosition(topLeftPointCoords.y, bottomRightPointCoords.y, pageContainer, zoom);
-
-        } else if (clickedPage.state === 'double') {
-            const firstPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[0]}`);
-            // const secondPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[1]}`);
-
-            const topLeftPointCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page[0]);
-            const bottomRightPointCoords = displayMode.windowToPage(bottomRightPoint, clickedPage.page[1]);
-
-            const fieldPxAmountInFirstPage = firstPageContainer.offsetHeight - (topLeftPointCoords.y * zoom);
-            const fieldPxAmountInSecondPage = bottomRightPointCoords.y * zoom;
-
-            // Si les valeurs sont égales, en page 1 arbitrairement
-            x = topLeftPointCoords.x
-            y = 0
-            page = clickedPage.page[1]
-
-            if (fieldPxAmountInFirstPage >= fieldPxAmountInSecondPage) {
-                y = (firstPageContainer.offsetHeight - (this.LABEL_FIELD_HEIGHT * zoom)) / zoom;
-                page = clickedPage.page[0];
+            // Set x y et page pour "full",  page pour le "partial"
+            if (clickedPage.state !== 'double') {
+                x = displayMode.windowToPage(topLeftPoint, clickedPage.page).x;
+                y = displayMode.windowToPage(topLeftPoint, clickedPage.page).y;
+                page = clickedPage.page;
             }
+
+            // Redéfinis x et y pour partial
+            if (clickedPage.state === 'partial') {
+
+                const pageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page}`);
+                const topLeftPointCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page);
+                const bottomRightPointCoords = displayMode.windowToPage(bottomRightPoint, clickedPage.page);
+
+                x = this.getAnnotationXPosition(topLeftPointCoords.x, bottomRightPointCoords.x, pageContainer, zoom);
+                y = this.getAnnotationYPosition(topLeftPointCoords.y, bottomRightPointCoords.y, pageContainer, zoom);
+
+                // Redéfinis tout pour "double"
+            } else if (clickedPage.state === 'double') {
+                const firstPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[0]}`);
+                // const secondPageContainer = iframeWindow.document.querySelector(`#pageContainer${clickedPage.page[1]}`);
+
+                const topLeftPointCoords = displayMode.windowToPage(topLeftPoint, clickedPage.page[0]);
+                const bottomRightPointCoords = displayMode.windowToPage(bottomRightPoint, clickedPage.page[1]);
+
+                const fieldPxAmountInFirstPage = firstPageContainer.offsetHeight - (topLeftPointCoords.y * zoom);
+                const fieldPxAmountInSecondPage = bottomRightPointCoords.y * zoom;
+
+                // Si les valeurs sont égales, en page 1 arbitrairement
+                x = topLeftPointCoords.x
+                y = 0
+                page = clickedPage.page[1]
+
+                if (fieldPxAmountInFirstPage >= fieldPxAmountInSecondPage) {
+                    y = (firstPageContainer.offsetHeight - (this.LABEL_FIELD_HEIGHT * zoom)) / zoom;
+                    page = clickedPage.page[0];
+                }
+            }
+
+            this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, x, y, page);
         }
 
-        this.addFormFieldAnnotation(field.type, 'NAME !!!', 'TOTO', true, x, y, page);
         this.deleteField(field.type, field.id);
-
 
         this.setState({isDragging: false, isScrolling: false});
         clearInterval(this.scrollTimer);
@@ -396,8 +434,13 @@ class ClassComponent extends React.Component {
             return topLeftY;
     }
 
-
     addFormFieldAnnotation = (type, name, value, flag, x, y, pageNumber) => {
+
+        const colorMapping =  {
+            signature: [20,172,227],
+            name: [235, 45, 102],
+            email: [26, 219, 161]
+        }
 
         const {webViewer} = this.state;
         const {docViewer, Annotations} = webViewer;
@@ -412,10 +455,12 @@ class ClassComponent extends React.Component {
         textAnnotation.Height = this.LABEL_FIELD_HEIGHT;
         textAnnotation.X = x
         textAnnotation.Y = y;
-        textAnnotation.setContents(name + '_' + type);
+        textAnnotation.setContents(type.toUpperCase());
         textAnnotation.setPadding(new Annotations.Rect(0, 0, 0, 0));
-        textAnnotation.FillColor = new Annotations.Color(0, 255, 255);
+        textAnnotation.FillColor = new Annotations.Color(...colorMapping[type]);
+        //235, 45, 102
         console.log("textAnnot", textAnnotation);
+        annotationManager.enableRedaction(false)
         annotationManager.addAnnotation(textAnnotation, { autoFocus: false });
         annotationManager.redrawAnnotation(textAnnotation);
     };
@@ -444,16 +489,12 @@ class ClassComponent extends React.Component {
     }
 
     render() {
-        const {fields, isDragging } = this.state;
+        const {fields, isDragging, showOptions } = this.state;
 
-        return (<>
-            <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "300px", zIndex: 1}}>
-            {/*<div className="sidebar" style={{ backgroundColor: "#E8E8E8", zIndex: 1}}>*/}
-
-                {/*SIDEBAR*/}
-                {/*<div className="sidebar-signature">*/}
+        return (
+            <>
+                <div className="sidebar" style={{height: "100%", backgroundColor: "#E8E8E8", width: "300px", zIndex: 1}}>
                     {fields.map(field => {
-                        // if (field.type === this.SIGNATURE_TYPE)
                         return (
                             <DraggableField
                                 field={field}
@@ -466,51 +507,30 @@ class ClassComponent extends React.Component {
                             />
                         )
                     })}
-                <button onClick={(e) => this.test(e)}>ZZ</button>
-                {/*</div>*/}
-                {/*<div className="sidebar-name">*/}
-                {/*    {fields.map(field => {*/}
-                {/*        if (field.type === this.NAME_TYPE)*/}
-                {/*            return (*/}
-                {/*                <DraggableField*/}
-                {/*                    field={field}*/}
-                {/*                    getStyle={this.getStyle}*/}
-                {/*                    onDragStart={this.onDragStart}*/}
-                {/*                    onDragStop={this.onDragStop}*/}
-                {/*                    onDragHandler={this.onDragHandler}*/}
-                {/*                    createField={this.createField}*/}
-                {/*                    deleteField={this.deleteField}*/}
-                {/*                />*/}
-                {/*            )*/}
-                {/*    })}*/}
-                {/*</div>*/}
-                {/*<div className="sidebar-email">*/}
-                {/*    {fields.map(field => {*/}
-                {/*        if (field.type === this.EMAIL_TYPE)*/}
-                {/*            return (*/}
-                {/*                <DraggableField*/}
-                {/*                    field={field}*/}
-                {/*                    getStyle={this.getStyle}*/}
-                {/*                    onDragStart={this.onDragStart}*/}
-                {/*                    onDragStop={this.onDragStop}*/}
-                {/*                    onDragHandler={this.onDragHandler}*/}
-                {/*                    createField={this.createField}*/}
-                {/*                    deleteField={this.deleteField}*/}
-                {/*                />*/}
-                {/*            )*/}
-                {/*    })}*/}
-                {/*</div>*/}
-            </div>
-            <div id="pdf-wrapper" className="MyComponent" style={{height: '100%', flex: 1}}>
-            {/*<div id="pdf-wrapper" className="MyComponent" style={{height: '100%'}}>*/}
-                {/*<button onClick={() => console.log(webViewer)}>X</button>*/}
-                {isDragging &&
-                    <div id="cover" style={this.getCoverStyle()}/>
-                }
-                <div className="webviewer" ref={this.viewer} style={{height: "100%"}}></div>
-            </div>
+                    <button onClick={(e) => this.test(e)}>ZZ</button>
 
-        </>);
+
+                </div>
+                {showOptions &&
+                <div style={{width: 250,
+                    height:400,
+                    border: "1px grey solid",
+                    position: "absolute",
+                    top: '50%',
+                    left: '50%',
+                    backgroundColor: 'white'
+                }}>
+                    OPTIONS BOX
+                </div>
+                }
+                <div id="pdf-wrapper" className="MyComponent" style={{height: '100%', flex: 1}}>
+                    {isDragging &&
+                        <div id="cover" style={this.getCoverStyle()}/>
+                    }
+                    <div className="webviewer" ref={this.viewer} style={{height: "100%"}}/>
+                </div>
+            </>
+        );
     }
 }
 
