@@ -28,7 +28,9 @@ class ClassComponent extends React.Component {
             nameCounter: 1,
             isDragging: false,
             isScrolling: false,
+           // Customisation
             showOptions: false,
+            currentAnnotations: false,
         }
         this.viewer = createRef();
     }
@@ -39,7 +41,7 @@ class ClassComponent extends React.Component {
                 licenseKey: 'toto',
                 path: '/pdftron/lib',
                 initialDoc: '/fixture/sample.pdf',
-                disabledElements: ['header', 'toolsHeader', 'annotationCommentButton', ]
+                disabledElements: ['header', 'toolsHeader', 'annotationCommentButton', 'linkButton']
             },
             this.viewer.current,
         )
@@ -54,24 +56,54 @@ class ClassComponent extends React.Component {
             img: '/user.png',
             // label: 'edit',
             onClick: () => {
+                const {currentAnnotations } = this.state;
                 this.setState({showOptions: true});
+                //TODO Gestion du multi select
+                // if (currentAnnotations.length === 1) {
+                    const annotPicked = annotationManager.getAnnotationById(currentAnnotations[0].Id);
+                    const position = annotPicked.getRect();
+                    console.log(position);
+                    console.log('type annotPicked', annotPicked.getCustomData('type'))
+                    // console.log('Annotation picked', annotationManager.getAnnotationById(currentAnnotations[0].Id))
+                // }
             }
         }]);
 
-        // docViewer.on('mouseLeftDown', (e) => {
-        //     console.log("saucisse", e)
-        //     e.stopImmediatePropagation();
-        // })
 
         annotationManager.on("annotationSelected", (annotations, action) => {
             console.log('TRIGGERED')
             console.log(action)
             console.log(annotations)
-            if (action !== 'selected') {
+
+            if (action === 'deselected') {
                 // this.setState({showOptions: true})
                 this.setState({showOptions: false})
             } else {
-                // this.setState({showOptions: false})
+
+                //TODO VRAI GESTION du STATE (Stratégie à implémenter)
+                // Utilisé par le listener de la popup user pour savoir quel annotation est choisi.
+                this.setState({currentAnnotations: annotations});
+                this.setState({showOptions: true})
+                annotations.forEach((annotation) => {
+                    console.log('getRect',annotation.getRect())
+                    console.log('getCustom', annotation.getCustomData('type'))
+                    console.log('ID CUSTO', annotation.getCustomData('id'))
+                    console.log("REAL ID", annotation.Id);
+                    console.log('getContents()', annotation.getContents())
+                })
+            }
+        })
+
+        annotationManager.on('annotationChanged', (annotations, action, info) => {
+            console.log(annotations, action, info);
+            switch (action) {
+                case 'add':
+                    break;
+                case 'modify':
+                    break;
+                case 'delete':
+                    console.log("DELETE ANNOTS")
+                    break
             }
         })
 
@@ -450,7 +482,10 @@ class ClassComponent extends React.Component {
         const textAnnotation = new Annotations.FreeTextAnnotation();
 
         textAnnotation.PageNumber = pageNumber;
-        textAnnotation.custom = { type, value, flag };
+        textAnnotation.custom = { type, value, flag }; // Not working
+        textAnnotation.setCustomData('type', type); // Works
+        textAnnotation.setCustomData('id', Math.floor(Math.random() * 1500));
+        textAnnotation.setCustomData('message', '');
         textAnnotation.Width = this.LABEL_FIELD_WIDTH;
         textAnnotation.Height = this.LABEL_FIELD_HEIGHT;
         textAnnotation.X = x
@@ -489,7 +524,7 @@ class ClassComponent extends React.Component {
     }
 
     render() {
-        const {fields, isDragging, showOptions } = this.state;
+        const {fields, isDragging, showOptions, currentAnnotations } = this.state;
 
         return (
             <>
@@ -508,27 +543,45 @@ class ClassComponent extends React.Component {
                         )
                     })}
                     <button onClick={(e) => this.test(e)}>ZZ</button>
-
-
+                    {showOptions &&
+                    <div style={{width: 250,
+                        // height: '100%',
+                        // border: "1px grey solid",
+                        position: "absolute",
+                        top: '50%',
+                        // left: '50%',
+                        // backgroundColor: 'white'
+                    }}>
+                        OPTIONS BOX
+                        <p>{currentAnnotations[0].getCustomData('type')}</p>
+                        <p>{currentAnnotations[0].Id}</p>
+                        <input type="text" defaultValue={currentAnnotations[0].getCustomData('message')} onChange={(e) => {
+                            currentAnnotations[0].setCustomData('message', e.target.value);
+                            this.setState(currentAnnotations)
+                        }}/>
+                    </div>
+                    }
                 </div>
-                {showOptions &&
-                <div style={{width: 250,
-                    height:400,
-                    border: "1px grey solid",
-                    position: "absolute",
-                    top: '50%',
-                    left: '50%',
-                    backgroundColor: 'white'
-                }}>
-                    OPTIONS BOX
-                </div>
-                }
                 <div id="pdf-wrapper" className="MyComponent" style={{height: '100%', flex: 1}}>
                     {isDragging &&
                         <div id="cover" style={this.getCoverStyle()}/>
                     }
                     <div className="webviewer" ref={this.viewer} style={{height: "100%"}}/>
                 </div>
+                {/*{showOptions &&*/}
+                {/*<div style={{width: 250,*/}
+                {/*    height: '100%',*/}
+                {/*    border: "1px grey solid",*/}
+                {/*    // position: "absolute",*/}
+                {/*    // top: '50%',*/}
+                {/*    // left: '50%',*/}
+                {/*    backgroundColor: 'white'*/}
+                {/*}}>*/}
+                {/*    OPTIONS BOX*/}
+                {/*    <p>{currentAnnotations[0].getCustomData('type')}</p>*/}
+                {/*    <p>{currentAnnotations[0].Id}</p>*/}
+                {/*</div>*/}
+                {/*}*/}
             </>
         );
     }
