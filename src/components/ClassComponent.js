@@ -29,6 +29,7 @@ class ClassComponent extends React.Component {
             isDragging: false,
             isScrolling: false,
            // Customisation
+            annotations: [],
             showOptions: false,
             currentAnnotations: false,
         }
@@ -41,14 +42,14 @@ class ClassComponent extends React.Component {
                 licenseKey: 'toto',
                 path: '/pdftron/lib',
                 initialDoc: '/fixture/sample.pdf',
-                disabledElements: ['header', 'toolsHeader', 'annotationCommentButton', 'linkButton']
+                // disabledElements: ['header', 'toolsHeader', 'annotationCommentButton', 'linkButton']
             },
             this.viewer.current,
         )
         const defaultFields = this.getDefaultFields();
 
         this.setState({webViewer: instance, fields: defaultFields});
-
+        instance.Tools.Tool.ENABLE_TEXT_SELECTION = false;
         const {docViewer} = instance
         const annotationManager = docViewer.getAnnotationManager();
         instance.annotationPopup.add([{
@@ -98,11 +99,15 @@ class ClassComponent extends React.Component {
             console.log(annotations, action, info);
             switch (action) {
                 case 'add':
+                    console.log('ADD');
+                    // Faire la gestion permettant le CC
                     break;
                 case 'modify':
                     break;
                 case 'delete':
+                    console.log('Annotations deleted', annotations[0].Id)
                     console.log("DELETE ANNOTS")
+                    this.deleteAnnotationFromState(annotations);
                     break
             }
         })
@@ -348,7 +353,7 @@ class ClassComponent extends React.Component {
     }
 
     test = (e) => {
-        const { webViewer} = this.state;
+        const { webViewer, annotations } = this.state;
         const { docViewer } = webViewer;
         const annotManager = docViewer.getAnnotationManager();
         const tool = new webViewer.Tools.Tool(docViewer);
@@ -360,7 +365,8 @@ class ClassComponent extends React.Component {
         // console.log(this.state.signatureCounter);
         // console.log(this.state.isDragging);
         console.log(this.state.fields);
-        console.log("les annots",annotManager.getAnnotationsList())
+        console.log("les annots depuis le manager",annotManager.getAnnotationsList())
+        console.log('annot depuis state', annotations)
         // console.log(getMouseLocation(e));
         // console.log("isScrolling test", this.state.isScrolling);
         // const position = containerToScrollElt.getBoundingClientRect();
@@ -482,10 +488,11 @@ class ClassComponent extends React.Component {
         const textAnnotation = new Annotations.FreeTextAnnotation();
 
         textAnnotation.PageNumber = pageNumber;
-        textAnnotation.custom = { type, value, flag }; // Not working
-        textAnnotation.setCustomData('type', type); // Works
-        textAnnotation.setCustomData('id', Math.floor(Math.random() * 1500));
-        textAnnotation.setCustomData('message', '');
+        textAnnotation.custom = { type, value, flag, id: textAnnotation.Id, message: '' };
+        // textAnnotation.setCustomData('type', type); // Works
+        // textAnnotation.setCustomData('id', Math.floor(Math.random() * 1500));
+        // textAnnotation.setCustomData('message', '');
+        // textAnnotation.setCustomData('realId', textAnnotation.Id);
         textAnnotation.Width = this.LABEL_FIELD_WIDTH;
         textAnnotation.Height = this.LABEL_FIELD_HEIGHT;
         textAnnotation.X = x
@@ -498,6 +505,7 @@ class ClassComponent extends React.Component {
         annotationManager.enableRedaction(false)
         annotationManager.addAnnotation(textAnnotation, { autoFocus: false });
         annotationManager.redrawAnnotation(textAnnotation);
+        this.addAnnotationToState(textAnnotation);
     };
 
     getPage = (selectedPages) => {
@@ -523,8 +531,45 @@ class ClassComponent extends React.Component {
 
     }
 
+    addAnnotationToState = (annotation) => {
+        const { annotations } = this.state;
+
+        const annotationsCopy = JSON.parse(JSON.stringify((annotations)));
+        // console.log('new annotation', annotation); // Good
+        annotationsCopy.push(annotation);
+
+        this.setState({annotations: annotationsCopy});
+    }
+
+    deleteAnnotationFromState = (annotationsToDelete) => {
+        const { annotations } = this.state;
+        console.log("annotations state", annotations); // Id = Undefined mais Qw c'est bon
+        // console.log('realId from customData', annotations[0].getCustomData('realId'))
+        const annotationIdsToDelete = annotationsToDelete.map(annotation => annotation.custom.id);
+        console.log("annot ids to delete", annotationIdsToDelete)
+        let indexToDelete = [];
+
+        const annotationsCopy = JSON.parse(JSON.stringify((annotations)));
+        console.log("annotationsCopy",annotationsCopy)
+
+        annotationsCopy.forEach((annotation, index) => {
+
+            if (annotationIdsToDelete.includes(annotation.custom.id)) {
+                indexToDelete.push(index);
+            }
+        })
+
+        for (let i = indexToDelete.length - 1; i >= 0; i--) {
+            annotationsCopy.splice(indexToDelete[i], 1);
+        }
+
+        console.log("annotations après suppression", annotationsCopy);
+
+        this.setState({annotations: annotationsCopy});
+    }
+
     render() {
-        const {fields, isDragging, showOptions, currentAnnotations } = this.state;
+        const {fields, isDragging, showOptions, currentAnnotations} = this.state;
 
         return (
             <>
@@ -553,12 +598,13 @@ class ClassComponent extends React.Component {
                         // backgroundColor: 'white'
                     }}>
                         OPTIONS BOX
-                        <p>{currentAnnotations[0].getCustomData('type')}</p>
-                        <p>{currentAnnotations[0].Id}</p>
-                        <input type="text" defaultValue={currentAnnotations[0].getCustomData('message')} onChange={(e) => {
-                            currentAnnotations[0].setCustomData('message', e.target.value);
-                            this.setState(currentAnnotations)
-                        }}/>
+                        {/* Fait buguer le CC*/}
+                        {/*<p>{currentAnnotations[0].custom.type}</p>*/}
+                        {/*<p>{currentAnnotations[0].custom.id}</p>*/}
+                        {/*<input type="text" defaultValue={currentAnnotations[0].custom.message} onChange={(e) => {*/}
+                        {/*    currentAnnotations[0].custom.message = e.target.value;*/}
+                        {/*    this.setState(currentAnnotations)*/}
+                        {/*}}/>*/}
                     </div>
                     }
                 </div>
