@@ -43,15 +43,45 @@ class ClassComponent extends React.Component {
                 path: '/pdftron/lib',
                 initialDoc: '/fixture/sample.pdf',
                 // disabledElements: ['header', 'toolsHeader', 'annotationCommentButton', 'linkButton']
+                disabledElements: [
+                    'notesPanelButton', 'notesPanel', 'thumbnailsPanelButton',
+                    'outlinesPanelButton', 'thumbDelete', 'leftPanelTabs', 'searchPanel',
+                    'leftPanelButton', 'searchButton', 'leftPanelResizeBar', 'thumbRotateCounterClockwise',
+                    'thumbRotateClockwise', 'thumbnailsSizeSlider'
+                ]
             },
             this.viewer.current,
         )
         const defaultFields = this.getDefaultFields();
 
         this.setState({webViewer: instance, fields: defaultFields});
+        // instance.enableElements(['leftPanel']);
+
+        this.invertPanel(instance);
+
+        // instance.openElements(['leftPanel']);
+        // const iframeDoc = instance.iframeWindow.document;
+        // const docContainer = iframeDoc.querySelector('.document-content-container');
+        // const leftPanel = iframeDoc.querySelector('[data-element="leftPanel"]');
+        // const leftPanelContainer = iframeDoc.querySelector('.left-panel-container');
+        // leftPanel.classList.remove('LeftPanel');
+        // leftPanel.classList.add('right-panel');
+        // leftPanelContainer.style.paddingTop = "16px";
+        // // leftPanelContainer.style.paddingLeft = "8px";
+        // leftPanelContainer.style.paddingRight = "8px";
+        // docContainer.style.marginLeft = 0;
+        // // docContainer.style.marginRight = 0;
+        // docContainer.style.width = `calc(100% - ${leftPanel.clientWidth}px)`;
+        // console.log('LeftPanel width', leftPanel.clientWidth);
+        // console.log('LeftPanel height', leftPanel.clientHeight);
+
+        this.getRightSidebarStyle(instance);
+
         instance.Tools.Tool.ENABLE_TEXT_SELECTION = false;
+
         const {docViewer} = instance
         const annotationManager = docViewer.getAnnotationManager();
+
         instance.annotationPopup.add([{
             type: 'actionButton',
             img: '/user.png',
@@ -85,13 +115,13 @@ class ClassComponent extends React.Component {
                 // Utilisé par le listener de la popup user pour savoir quel annotation est choisi.
                 this.setState({currentAnnotations: annotations});
                 this.setState({showOptions: true})
-                annotations.forEach((annotation) => {
-                    console.log('getRect',annotation.getRect())
-                    console.log('getCustom', annotation.getCustomData('type'))
-                    console.log('ID CUSTO', annotation.getCustomData('id'))
-                    console.log("REAL ID", annotation.Id);
-                    console.log('getContents()', annotation.getContents())
-                })
+                // annotations.forEach((annotation) => {
+                //     console.log('getRect',annotation.getRect())
+                //     console.log('getCustom', annotation.getCustomData('type'))
+                //     console.log('ID CUSTO', annotation.getCustomData('id'))
+                //     console.log("REAL ID", annotation.Id);
+                //     console.log('getContents()', annotation.getContents())
+                // })
             }
         })
 
@@ -117,6 +147,60 @@ class ClassComponent extends React.Component {
         //     // e.stopImmediatePropagation();
         // })
 
+        window.addEventListener('resize', () => {
+            console.log('resize')
+            const iframeDoc = instance.iframeWindow.document;
+            const leftPanel = iframeDoc.querySelector('[data-element="leftPanel"]');
+            const docContainer = iframeDoc.querySelector('.document-content-container');
+            docContainer.style.marginLeft = 0;
+            docContainer.style.width = `calc(100% - ${leftPanel.clientWidth}px)`;
+        })
+
+    }
+
+    // Ordre indispensable : On ouvre le leftPanel PUIS on y applique nos modifications.
+    invertPanel = (webViewer) => {
+        webViewer.openElements(['leftPanel']);
+
+        const iframeDoc = webViewer.iframeWindow.document;
+        const docContainer = iframeDoc.querySelector('.document-content-container');
+        const leftPanel = iframeDoc.querySelector('[data-element="leftPanel"]');
+        const leftPanelContainer = iframeDoc.querySelector('.left-panel-container');
+
+        leftPanel.classList.remove('LeftPanel');
+        leftPanel.classList.add('right-panel');
+
+        leftPanelContainer.style.paddingTop = "16px";
+        // leftPanelContainer.style.paddingRight = "8px";
+
+        docContainer.style.marginLeft = 0;
+        docContainer.style.width = `calc(100% - ${leftPanel.clientWidth}px)`;
+
+    }
+
+    getRightSidebarStyle = (webViewer) => {
+        const iframeDoc = webViewer.iframeWindow.document;
+        const headerHeight = iframeDoc.querySelector('.Header').clientHeight;
+        const headerToolsContainerHeight = iframeDoc.querySelector('.HeaderToolsContainer').clientHeight;
+        const leftPanel = iframeDoc.querySelector('[data-element="leftPanel"]');
+
+        console.log("headerHeight", headerHeight)
+        console.log("headerToolsContainerHeight", headerToolsContainerHeight);
+        const height = headerHeight + headerToolsContainerHeight;
+
+        // TODO Calculer top
+        const style = {
+            position: 'absolute', // ? fixed
+            height: `calc(100% - ${height}px)`,
+            width: leftPanel.clientWidth,
+            top: height,
+            right: 0,
+            zIndex: 1500,
+            backgroundColor: '#f8f9fa'
+        }
+
+        console.log(style);
+        return style;
     }
 
     getDefaultFields = () => {
@@ -357,22 +441,24 @@ class ClassComponent extends React.Component {
         const { docViewer } = webViewer;
         const annotManager = docViewer.getAnnotationManager();
         const tool = new webViewer.Tools.Tool(docViewer);
-        console.log(tool.getMouseLocation(e))
-
-        const containerToScrollElt = docViewer.getScrollViewElement();
-        console.log('page',docViewer.getCurrentPage());
-        console.log("popsitionMouse")
-        // console.log(this.state.signatureCounter);
-        // console.log(this.state.isDragging);
-        console.log(this.state.fields);
-        console.log("les annots depuis le manager",annotManager.getAnnotationsList())
-        console.log('annot depuis state', annotations)
+        // console.log(tool.getMouseLocation(e))
+        //
+        // const containerToScrollElt = docViewer.getScrollViewElement();
+        // console.log('page',docViewer.getCurrentPage());
+        // console.log("popsitionMouse")
+        // // console.log(this.state.signatureCounter);
+        // // console.log(this.state.isDragging);
+        // console.log(this.state.fields);
+        // console.log("les annots depuis le manager",annotManager.getAnnotationsList())
+        // console.log('annot depuis state', annotations)
         // console.log(getMouseLocation(e));
         // console.log("isScrolling test", this.state.isScrolling);
         // const position = containerToScrollElt.getBoundingClientRect();
         // const position = document.querySelector('.MyComponent').getBoundingClientRect();
         // console.log('left', position.left);
         // console.log('top', position.top + window.scrollY)
+
+        this.getRightSidebarStyle(webViewer);
 
     }
 
@@ -569,7 +655,11 @@ class ClassComponent extends React.Component {
     }
 
     render() {
-        const {fields, isDragging, showOptions, currentAnnotations} = this.state;
+        const {fields, isDragging, showOptions, currentAnnotations, webViewer} = this.state;
+        let style = {}
+        console.log('render webviewer', webViewer);
+        if (webViewer) style = this.getRightSidebarStyle(webViewer);
+
 
         return (
             <>
@@ -614,20 +704,13 @@ class ClassComponent extends React.Component {
                     }
                     <div className="webviewer" ref={this.viewer} style={{height: "100%"}}/>
                 </div>
-                {/*{showOptions &&*/}
-                {/*<div style={{width: 250,*/}
-                {/*    height: '100%',*/}
-                {/*    border: "1px grey solid",*/}
-                {/*    // position: "absolute",*/}
-                {/*    // top: '50%',*/}
-                {/*    // left: '50%',*/}
-                {/*    backgroundColor: 'white'*/}
-                {/*}}>*/}
-                {/*    OPTIONS BOX*/}
-                {/*    <p>{currentAnnotations[0].getCustomData('type')}</p>*/}
-                {/*    <p>{currentAnnotations[0].Id}</p>*/}
-                {/*</div>*/}
-                {/*}*/}
+                {showOptions &&
+                <div style={style}>
+                    OPTIONS BOX
+                    <p>{currentAnnotations[0].getCustomData('type')}</p>
+                    <p>{currentAnnotations[0].Id}</p>
+                </div>
+                }
             </>
         );
     }
